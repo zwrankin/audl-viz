@@ -27,36 +27,49 @@ app.layout = html.Div([
     # HEADER
     dcc.Markdown(children=top_markdown_text),
 
-    html.Div([
+    dcc.Tabs(id="tabs", style={
+            'textAlign': 'center', 'margin': '48px 0', 'fontFamily': 'system-ui'}, children=[
+        dcc.Tab(label='Overview', children=[
+            html.Div([
 
-        html.Div([
-            dcc.RadioItems(
-                id='year',
-                options=[{'label': i, 'value': i} for i in df.year.unique()],
-                value=2018,
-                labelStyle={'display': 'inline-block'},
-            ),
-            dcc.Dropdown(
-                id='xaxis-column',
-                options=[{'label': i, 'value': i} for i in available_indicators],
-                value='Goals'
-            ),
-            dcc.Dropdown(
-                id='yaxis-column',
-                options=[{'label': i, 'value': i} for i in available_indicators],
-                value='Goals_against'
-            ),
-        ],
-            style={'width': '48%', 'display': 'inline-block'}),
+                html.Div([
+                    dcc.RadioItems(
+                        id='year',
+                        options=[{'label': i, 'value': i} for i in df.year.unique()],
+                        value=2018,
+                        labelStyle={'display': 'inline-block'},
+                    ),
+                    dcc.Dropdown(
+                        id='xaxis-column',
+                        options=[{'label': i, 'value': i} for i in available_indicators],
+                        value='Goals'
+                    ),
+                    dcc.Dropdown(
+                        id='yaxis-column',
+                        options=[{'label': i, 'value': i} for i in available_indicators],
+                        value='Goals_against'
+                    ),
+                ],
+                    style={'width': '48%', 'display': 'inline-block'}),
 
-        dcc.Graph(id='scatterplot'),
+                dcc.Graph(id='scatterplot'),
 
-    ])
+            ]),
+        ]),
+        dcc.Tab(label='Individual Leaderboard', children=[
+            html.Div([
+
+                html.H1('Coming Soon!'),
+
+            ]),
+        ]),
+    ]),
+
 ])
 
 
 @app.callback(
-    dash.dependencies.Output('scatterplot', 'figure'),
+    Output('scatterplot', 'figure'),
     [Input('xaxis-column', 'value'),
      Input('yaxis-column', 'value'),
      Input('year', 'value')])
