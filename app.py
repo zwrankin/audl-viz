@@ -5,6 +5,7 @@ from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.graph_objs as go
 from src.data.process_team_indicators import index_vars, indicators
+from src.visualization.utils import palette_df
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -14,6 +15,7 @@ server = app.server
 
 df = pd.read_csv('./data/processed/team_indicators.csv')
 df = df.melt(id_vars=index_vars, value_vars=indicators, var_name='indicator')
+df = pd.merge(df, palette_df, how='outer').sort_values('team')
 
 available_indicators = list(df.indicator.unique())
 
@@ -85,8 +87,9 @@ def update_graph(xaxis_column_name, yaxis_column_name, year):
             mode='markers',
             marker={
                 'size': 15,
-                'opacity': 0.5,
-                'line': {'width': 0.5, 'color': 'white'}
+                'color': dff[(dff['indicator'] == yaxis_column_name) & (dff['team'] == t)]['color1'],
+                'line': {'width': 3,
+                         'color': dff[(dff['indicator'] == yaxis_column_name) & (dff['team'] == t)]['color2']}
             }
         ) for t in dff.team.unique()],
         'layout': go.Layout(
