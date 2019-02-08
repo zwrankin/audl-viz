@@ -4,7 +4,7 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.graph_objs as go
-from src.data.process_team_indicators import index_vars, indicators, player_indicators
+from src.data.process_team_indicators import index_vars, team_indicators, player_indicators
 from src.visualization.utils import palette_df
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -14,13 +14,11 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 server = app.server
 
 df = pd.read_csv('./data/processed/team_indicators.csv')
-df = df.melt(id_vars=index_vars, value_vars=indicators, var_name='indicator')
+df = df.melt(id_vars=index_vars, value_vars=team_indicators, var_name='indicator')
 df = pd.merge(df, palette_df, how='outer').sort_values('team')
 
 df_p = pd.read_csv('./data/processed/player_indicators.csv')
 player_team = df_p[['player', 'year', 'team']].drop_duplicates()
-
-available_indicators = list(df.indicator.unique())
 
 top_markdown_text = '''
 ###  AUDL Data Visualization V1
@@ -48,12 +46,12 @@ app.layout = html.Div([
 
                     dcc.Dropdown(
                         id='xaxis-column',
-                        options=[{'label': i, 'value': i} for i in available_indicators],
+                        options=[{'label': i, 'value': i} for i in team_indicators],
                         value='Goals'
                     ),
                     dcc.Dropdown(
                         id='yaxis-column',
-                        options=[{'label': i, 'value': i} for i in available_indicators],
+                        options=[{'label': i, 'value': i} for i in team_indicators],
                         value='Goals_against'
                     ),
                 ],

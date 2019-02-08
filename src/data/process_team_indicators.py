@@ -2,7 +2,7 @@ import pandas as pd
 from .utils import DATA_DIR, load_raw_data, clean_dates
 
 index_vars = ['year', 'team', 'opponent', 'date', 'game']
-indicators = ['Goals', 'Catches', 'Ds', 'Turnovers', 'Drops', 'Throwaways', 'Goals_against']
+team_indicators = ['Goals', 'Catches', 'Ds', 'Turnovers', 'Drops', 'Throwaways', 'Goals_against']
 player_indicators  = ['Completions', 'Assists', 'Throwaways', 'Receptions', 'Goals', 'Drops', 'Ds', 'Turnovers', 'Plus_Minus']
 
 def make_team_indicators(return_df = False):
@@ -28,7 +28,7 @@ def make_team_indicators(return_df = False):
     df.rename(columns=rename_ind_dict, inplace=True)
 
     # Reshape wide and save - NOTE that normally I'd do hdf but was having dash compatability issues so csv it is
-    df_wide = df.groupby(index_vars)[indicators].sum().reset_index()
+    df_wide = df.groupby(index_vars)[team_indicators].sum().reset_index()
     df_wide.to_csv(f'{DATA_DIR}/processed/team_indicators.csv', index=False)
 
     if return_df:
