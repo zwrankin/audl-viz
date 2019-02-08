@@ -15,6 +15,7 @@ defusedxml==0.5.0
 entrypoints==0.3
 Flask==1.0.2
 Flask-Compress==1.4.0
+gunicorn==19.9.0
 idna==2.8
 ipykernel==5.1.0
 ipython==7.2.0
@@ -56,7 +57,7 @@ scipy==1.2.0
 seaborn==0.9.0
 Send2Trash==1.5.0
 six==1.12.0
--e git+https://github.com/zwrankin/audl-viz.git@31258c8e6f62bc9da7988ced473fe10b555f01b9#egg=src
+-e git+https://github.com/zwrankin/audl-viz.git@8381033de3fb25bdef243fbc669bccc5d4da364c#egg=src
 terminado==0.8.1
 testpath==0.4.2
 tornado==5.1.1
