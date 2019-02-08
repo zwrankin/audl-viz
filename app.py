@@ -32,8 +32,8 @@ app.layout = html.Div([
 
     dcc.RadioItems(
         id='year',
-        options=[{'label': i, 'value': i} for i in df.year.unique()],
-        value=2018,
+        options=[{'label': i, 'value': i} for i in [2014, 2015, 2016, 2017, 2018, 'All years']],
+        value='All years',
         labelStyle={'display': 'inline-block'},
     ),
 
@@ -84,7 +84,10 @@ app.layout = html.Div([
      Input('yaxis-column', 'value'),
      Input('year', 'value')])
 def update_graph(xaxis_column_name, yaxis_column_name, year):
-    dff = df[df.year == year]
+    if year != 'All years':
+        dff = df[df.year == year]
+    else:
+        dff = df.copy()
 
     return {
         'data': [go.Scatter(
@@ -119,12 +122,21 @@ def update_graph(xaxis_column_name, yaxis_column_name, year):
     [Input('player-indicator', 'value'),
      Input('year', 'value')])
 def update_leaderboard(indicator, year):
-    dff = df_p[df_p.year == year].groupby('player')[player_indicators].sum().reset_index()
+    if year != 'All years':
+        df1 = df_p[df_p.year == year]
+    else:
+        df1 = df_p.copy()
+    dff = df1.groupby('player')[player_indicators].sum().reset_index()
+
     dff = dff.melt(id_vars='player', value_vars=player_indicators, var_name='indicator')
     n_players = 15
     dff = dff[dff.indicator == indicator]
     # Get correct team & color for specific year
-    dff = pd.merge(player_team[player_team['year'] == year], dff)
+    if year == 'All years':
+        player_map = player_team[player_team['year'] == 2018]
+    else:
+        player_map = player_team[player_team['year'] == year]
+    dff = pd.merge(player_map, dff)
     dff = pd.merge(dff, palette_df, how='outer').sort_values('value', ascending=False)[:n_players]
     dff = dff.sort_values('value', ascending=True)  # plotly seems to invert the order?
 
