@@ -1,19 +1,13 @@
 import pandas as pd
-from .utils import DATA_DIR, load_raw_data
+from .utils import DATA_DIR, load_raw_data, clean_dates
 
 index_vars = ['year', 'team', 'opponent', 'date', 'game']
 indicators = ['Goals', 'Catches', 'Ds', 'Turnovers', 'Drops', 'Throwaways', 'Goals_against']
+player_indicators  = ['Completions', 'Assists', 'Throwaways', 'Receptions', 'Goals', 'Drops', 'Ds', 'Turnovers', 'Plus_Minus']
 
-def make_team_indicators():
+def make_team_indicators(return_df = False):
 
     df = load_raw_data()
-
-    # Make index
-    df['datetime'] = pd.to_datetime(df['Date/Time'])
-    df['date'] = df.datetime.dt.date
-    df['year'] = df.datetime.dt.year
-    df.rename(columns={'Teamname':'team', 'Opponent':'opponent'}, inplace=True)
-    df['game'] = df.team + "_" + df.opponent + "_" + df.date.map(str)
 
     # Make indicators
     dummies = pd.get_dummies(df['Action'])
@@ -36,6 +30,65 @@ def make_team_indicators():
     # Reshape wide and save - NOTE that normally I'd do hdf but was having dash compatability issues so csv it is
     df_wide = df.groupby(index_vars)[indicators].sum().reset_index()
     df_wide.to_csv(f'{DATA_DIR}/processed/team_indicators.csv', index=False)
+
+    if return_df:
+        return df_wide
+
+
+def make_player_indicators(return_df=False):
+
+    df = load_raw_data()
+    # Make index
+    df.rename(columns={'Teamname': 'team', 'Opponent': 'opponent'}, inplace=True)
+    df['game'] = df.team + "_" + df.opponent + "_" + df.date.map(str)
+
+    # For now, I won't track stats of missing, because all relevant ones (e.g. Goals) should be present
+    # df.Passer.fillna('UNKNOWN_OR_NONE', inplace=True)
+    # df.Receiver.fillna('UNKNOWN_OR_NONE', inplace=True)
+
+    # Passer-based stats
+    df_p = df.copy()
+    df_p['player'] = df['Passer']
+    df_p['Completions'] = 0
+    df_p['Assists'] = 0
+    df_p['Throwaways'] = 0
+    df_p.loc[df_p['Action'] == 'Catch', 'Completions'] = 1
+    df_p.loc[df_p['Action'] == 'Goal', 'Assists'] = 1
+    df_p.loc[df_p['Action'] == 'Throwaway', 'Throwaways'] = 1
+
+    # Receiver-based stats (goals, drops)
+    df_r = df.copy()
+    df_r['player'] = df['Receiver']
+    df_r['Goals'] = 0
+    df_r['Drops'] = 0
+    df_r['Receptions'] = 0
+    df_r.loc[df_r['Action'] == 'Catch', 'Receptions'] = 1
+    df_r.loc[df_r['Action'] == 'Goal', 'Goals'] = 1
+    df_r.loc[df_r['Action'] == 'Drop', 'Drops'] = 1
+
+    # Defensive stats
+    df_d = df.copy()
+    df_d['player'] = df['Defender']
+    df_d['Ds'] = 0
+    df_d.loc[df_r['Action'] == 'D', 'Ds'] = 1
+
+    # TODO - Points Played
+
+    df_all = pd.concat([df_p, df_r, df_d], sort=False)
+
+    inds  = player_indicators(['Turnovers', 'Plus_Minus'])
+    df_wide = df_all.groupby(index_vars + ['player'])[inds].sum().reset_index()
+
+    # Aggregates:
+    df_wide['Turnovers'] = df_wide.Throwaways + df_wide.Drops
+    df_wide['Plus_Minus'] = df_wide.Goals + df_wide.Assists + df_wide.Ds - df_wide.Turnovers
+
+    df_wide.to_csv(f'{DATA_DIR}/processed/player_indicators.csv', index=False)
+
+    if return_df:
+        return df_wide
+
+
 
 
 if __name__ == '__main__':
