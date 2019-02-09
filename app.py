@@ -21,6 +21,10 @@ df = pd.merge(df, palette_df, how='outer').sort_values('team')
 df_p = pd.read_csv('./data/processed/player_indicators.csv')
 player_team = df_p[['player', 'year', 'team']].drop_duplicates()
 
+df_g = pd.concat([pd.DataFrame(df_p.groupby(['team', 'year'])[i].apply(gini)) for i in player_indicators], axis=1)
+[df_g.rename(columns={i: i + '_gini'}, inplace=True) for i in player_indicators]
+df_g.reset_index(inplace=True)
+
 # Team records
 df_wins = pd.read_csv('./data/processed/team_indicators_EOY.csv')
 
@@ -28,6 +32,7 @@ top_markdown_text = '''
 ###  AUDL Data Visualization V1
 #### Zane Rankin, 2/7/2019
 Using data downloaded from [AUDL-pull](https://github.com/dfiorino/audl-pull) by Dan Fiorino
+Visualization using Plotly and Dash - [Github](https://github.com/zwrankin/audl-viz)
 '''
 
 gini_text = '''
@@ -37,10 +42,19 @@ A lower Gini coefficient for goals indicates a more even distribution of scoring
 indicates fewer players scoring more of the team's goals. 
 '''
 
+
+def subset_years(df, year):
+    if year != 'All years':
+        return df[df.year == year]
+    else:
+        return df
+
+
 app.layout = html.Div([
 
     dcc.Markdown(children=top_markdown_text),
 
+    html.H6('Season for Analysis'),
     dcc.RadioItems(
         id='year',
         options=[{'label': i, 'value': i} for i in [2014, 2015, 2016, 2017, 2018, 'All years']],
@@ -128,10 +142,7 @@ app.layout = html.Div([
      Input('yaxis-column', 'value'),
      Input('year', 'value')])
 def update_graph(xaxis_column_name, yaxis_column_name, year):
-    if year != 'All years':
-        dff = df[df.year == year]
-    else:
-        dff = df.copy()
+    dff = subset_years(df, year)
 
     return {
         'data': [go.Scatter(
@@ -167,23 +178,12 @@ def update_graph(xaxis_column_name, yaxis_column_name, year):
      Input('year', 'value')])
 def update_gini(gini_ind, year):
     # Team Record
-    if year != 'All years':
-        dff = df_wins[df_wins.year == year]
-    else:
-        dff = df_wins.copy()
-    dff = dff.groupby(['team', 'year'])['Wins', 'Losses'].sum().reset_index()
-    dff['Win_pct'] = dff.Wins / (dff.Wins + dff.Losses) * 100
+    dff = subset_years(df_wins, year)
 
     # Gini coefficients
-    if year != 'All years':
-        df1 = df_p[df_p.year == year]
-    else:
-        df1 = df_p.copy()
+    df_gini = subset_years(df_g, year)
 
-    df_gini = pd.concat([pd.DataFrame(df1.groupby(['team', 'year'])[i].apply(gini)) for i in player_indicators], axis=1)
-    [df_gini.rename(columns={i: i + '_gini'}, inplace=True) for i in player_indicators]
-
-    dff = pd.merge(dff, df_gini.reset_index())
+    dff = pd.merge(dff, df_gini)
     dff = pd.merge(dff, palette_df, how='outer')
     dff['team_year'] = dff.year.map(str) + ' ' + dff.team
 
@@ -220,10 +220,7 @@ def update_gini(gini_ind, year):
     [Input('team', 'value'),
      Input('year', 'value')])
 def update_players(team, year):
-    if year != 'All years':
-        df1 = df_p[df_p.year == year]
-    else:
-        df1 = df_p.copy()
+    df1 = subset_years(df_p, year)
 
     df1 = df1[df1.team == team]
     dff = df1.groupby('player')[player_indicators].sum().reset_index()
@@ -257,10 +254,8 @@ def update_players(team, year):
     [Input('player-indicator', 'value'),
      Input('year', 'value')])
 def update_leaderboard(indicator, year):
-    if year != 'All years':
-        df1 = df_p[df_p.year == year]
-    else:
-        df1 = df_p.copy()
+    df1 = subset_years(df_p, year)
+
     dff = df1.groupby('player')[player_indicators].sum().reset_index()
 
     dff = dff.melt(id_vars='player', value_vars=player_indicators, var_name='indicator')

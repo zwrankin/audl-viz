@@ -1,5 +1,5 @@
 import pandas as pd
-from .utils import DATA_DIR, load_raw_data, clean_dates
+from .utils import DATA_DIR, load_raw_data
 
 index_vars = ['year', 'team', 'opponent', 'date', 'game']
 team_indicators = ['Goals', 'Catches', 'Ds', 'Turnovers', 'Drops', 'Throwaways', 'Goals_against']
@@ -16,6 +16,8 @@ def make_team_indicators(return_df = False):
     df_final.loc[df_final['Our Score - End of Point'] < df_final['Their Score - End of Point'], 'Losses'] = 1
     df_final.loc[df_final['Our Score - End of Point'] > df_final['Their Score - End of Point'], 'Wins'] = 1
     df_final = df_final.groupby(['team', 'year'])['Wins', 'Losses'].sum().reset_index()
+    df_final['Win_pct'] = df_final.Wins / (df_final.Wins + df_final.Losses) * 100
+
     df_final.to_csv(f'{DATA_DIR}/processed/team_indicators_EOY.csv', index=False)
 
 
@@ -103,3 +105,4 @@ def make_player_indicators(return_df=False):
 
 if __name__ == '__main__':
     make_team_indicators()
+    make_player_indicators()
