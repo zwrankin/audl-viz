@@ -4,7 +4,7 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.graph_objs as go
-from src.data.process_team_indicators import index_vars, indicators
+from src.data.process_team_indicators import index_vars, team_indicators, player_indicators
 from src.visualization.utils import palette_df
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -14,10 +14,11 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 server = app.server
 
 df = pd.read_csv('./data/processed/team_indicators.csv')
-df = df.melt(id_vars=index_vars, value_vars=indicators, var_name='indicator')
+df = df.melt(id_vars=index_vars, value_vars=team_indicators, var_name='indicator')
 df = pd.merge(df, palette_df, how='outer').sort_values('team')
 
-available_indicators = list(df.indicator.unique())
+df_p = pd.read_csv('./data/processed/player_indicators.csv')
+player_team = df_p[['player', 'year', 'team']].drop_duplicates()
 
 top_markdown_text = '''
 ###  AUDL Data Visualization V1
@@ -29,26 +30,28 @@ app.layout = html.Div([
     # HEADER
     dcc.Markdown(children=top_markdown_text),
 
+    dcc.RadioItems(
+        id='year',
+        options=[{'label': i, 'value': i} for i in [2014, 2015, 2016, 2017, 2018, 'All years']],
+        value='All years',
+        labelStyle={'display': 'inline-block'},
+    ),
+
     dcc.Tabs(id="tabs", style={
-            'textAlign': 'center', 'margin': '48px 0', 'fontFamily': 'system-ui'}, children=[
+        'textAlign': 'center', 'margin': '48px 0', 'fontFamily': 'system-ui'}, children=[
         dcc.Tab(label='Overview', children=[
             html.Div([
 
                 html.Div([
-                    dcc.RadioItems(
-                        id='year',
-                        options=[{'label': i, 'value': i} for i in df.year.unique()],
-                        value=2018,
-                        labelStyle={'display': 'inline-block'},
-                    ),
+
                     dcc.Dropdown(
                         id='xaxis-column',
-                        options=[{'label': i, 'value': i} for i in available_indicators],
+                        options=[{'label': i, 'value': i} for i in team_indicators],
                         value='Goals'
                     ),
                     dcc.Dropdown(
                         id='yaxis-column',
-                        options=[{'label': i, 'value': i} for i in available_indicators],
+                        options=[{'label': i, 'value': i} for i in team_indicators],
                         value='Goals_against'
                     ),
                 ],
@@ -58,10 +61,28 @@ app.layout = html.Div([
 
             ]),
         ]),
+        dcc.Tab(label='Team Explorer', children=[
+            html.Div([
+                dcc.Dropdown(
+                    id='team',
+                    options=[{'label': i, 'value': i} for i in df.team.sort_values().unique()],
+                    value='Atlanta Hustle'
+                ),
+
+                # html.H1('testing'),
+                dcc.Graph(id='team-players'),
+
+            ]),
+        ]),
         dcc.Tab(label='Individual Leaderboard', children=[
             html.Div([
+                dcc.Dropdown(
+                    id='player-indicator',
+                    options=[{'label': i, 'value': i} for i in player_indicators],
+                    value='Goals'
+                ),
 
-                html.H1('Coming Soon!'),
+                dcc.Graph(id='leaderboard'),
 
             ]),
         ]),
@@ -76,7 +97,10 @@ app.layout = html.Div([
      Input('yaxis-column', 'value'),
      Input('year', 'value')])
 def update_graph(xaxis_column_name, yaxis_column_name, year):
-    dff = df[df.year == year]
+    if year != 'All years':
+        dff = df[df.year == year]
+    else:
+        dff = df.copy()
 
     return {
         'data': [go.Scatter(
@@ -101,6 +125,88 @@ def update_graph(xaxis_column_name, yaxis_column_name, year):
             },
             margin={'l': 40, 'b': 40, 't': 10, 'r': 0},
             height=600,
+            hovermode='closest'
+        )
+    }
+
+
+@app.callback(
+    Output('team-players', 'figure'),
+    [Input('team', 'value'),
+     Input('year', 'value')])
+def update_players(team, year):
+    if year != 'All years':
+        df1 = df_p[df_p.year == year]
+    else:
+        df1 = df_p.copy()
+
+    df1 = df1[df1.team == team]
+    dff = df1.groupby('player')[player_indicators].sum().reset_index()
+    dff = dff.melt(id_vars='player', value_vars=player_indicators, var_name='indicator')
+
+    return {
+        'data': [go.Scatter(
+            x=dff[dff.player == p]['value'],
+            y=dff[dff.player == p]['indicator'],
+            name=p,
+            mode='markers',
+            marker={
+                'size': 10,
+                'opacity': 0.5,
+                # 'color': dff['color1'],
+                # 'line': {'width': 3,
+                #          'color': dff['color2']}
+            },
+        ) for p in dff.player.unique()],
+        'layout': go.Layout(
+            title=team,
+            height=600,
+            margin={'l': 120, 'b': 40, 't': 40, 'r': 0},
+            hovermode='closest'
+        )
+    }
+
+
+@app.callback(
+    Output('leaderboard', 'figure'),
+    [Input('player-indicator', 'value'),
+     Input('year', 'value')])
+def update_leaderboard(indicator, year):
+    if year != 'All years':
+        df1 = df_p[df_p.year == year]
+    else:
+        df1 = df_p.copy()
+    dff = df1.groupby('player')[player_indicators].sum().reset_index()
+
+    dff = dff.melt(id_vars='player', value_vars=player_indicators, var_name='indicator')
+    n_players = 15
+    dff = dff[dff.indicator == indicator]
+    # Get correct team & color for specific year
+    if year == 'All years':
+        player_map = player_team[player_team['year'] == 2018]
+    else:
+        player_map = player_team[player_team['year'] == year]
+    dff = pd.merge(player_map, dff)
+    dff = pd.merge(dff, palette_df, how='outer').sort_values('value', ascending=False)[:n_players]
+    dff = dff.sort_values('value', ascending=True)  # plotly seems to invert the order?
+
+    return {
+        'data': [go.Scatter(
+            x=dff['value'],
+            y=dff['player'],
+            text=dff['team'],
+            mode='markers',
+            marker={
+                'size': 15,
+                'color': dff['color1'],
+                'line': {'width': 3,
+                         'color': dff['color2']}
+            },
+        )],
+        'layout': go.Layout(
+            title=indicator,
+            height=600,
+            margin={'l': 120, 'b': 40, 't': 40, 'r': 0},
             hovermode='closest'
         )
     }
