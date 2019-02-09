@@ -5,6 +5,7 @@ from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.graph_objs as go
 from src.data.process_team_indicators import index_vars, team_indicators, player_indicators
+from src.data.utils import gini
 from src.visualization.utils import palette_df
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -20,16 +21,40 @@ df = pd.merge(df, palette_df, how='outer').sort_values('team')
 df_p = pd.read_csv('./data/processed/player_indicators.csv')
 player_team = df_p[['player', 'year', 'team']].drop_duplicates()
 
+df_g = pd.concat([pd.DataFrame(df_p.groupby(['team', 'year'])[i].apply(gini)) for i in player_indicators], axis=1)
+[df_g.rename(columns={i: i + '_gini'}, inplace=True) for i in player_indicators]
+df_g.reset_index(inplace=True)
+
+# Team records
+df_wins = pd.read_csv('./data/processed/team_indicators_EOY.csv')
+
 top_markdown_text = '''
 ###  AUDL Data Visualization V1
 #### Zane Rankin, 2/7/2019
 Using data downloaded from [AUDL-pull](https://github.com/dfiorino/audl-pull) by Dan Fiorino
+Visualization using Plotly and Dash - [Github](https://github.com/zwrankin/audl-viz)
 '''
 
+gini_text = '''
+As per [Wikipedia](https://en.wikipedia.org/wiki/Gini_coefficient), the **Gini coefficient** is a
+"single number aimed at measuring the degree of inequality in a distribution," often applied to income inequality.  
+A lower Gini coefficient for goals indicates a more even distribution of scoring, whereas a high value
+indicates fewer players scoring more of the team's goals. 
+'''
+
+
+def subset_years(df, year):
+    if year != 'All years':
+        return df[df.year == year]
+    else:
+        return df
+
+
 app.layout = html.Div([
-    # HEADER
+
     dcc.Markdown(children=top_markdown_text),
 
+    html.H6('Season for Analysis'),
     dcc.RadioItems(
         id='year',
         options=[{'label': i, 'value': i} for i in [2014, 2015, 2016, 2017, 2018, 'All years']],
@@ -39,6 +64,7 @@ app.layout = html.Div([
 
     dcc.Tabs(id="tabs", style={
         'textAlign': 'center', 'margin': '48px 0', 'fontFamily': 'system-ui'}, children=[
+
         dcc.Tab(label='Overview', children=[
             html.Div([
 
@@ -69,7 +95,6 @@ app.layout = html.Div([
                     value='Atlanta Hustle'
                 ),
 
-                # html.H1('testing'),
                 dcc.Graph(id='team-players'),
 
             ]),
@@ -86,6 +111,26 @@ app.layout = html.Div([
 
             ]),
         ]),
+
+        dcc.Tab(label='Gini', children=[
+            html.Div([
+
+                dcc.Markdown(gini_text),
+
+                html.Div([
+
+                    dcc.Dropdown(
+                        id='gini-indicator',
+                        options=[{'label': f'{i}_gini', 'value': f'{i}_gini'} for i in player_indicators],
+                        value='Goals_gini'
+                    ),
+                ],
+                    style={'width': '48%', 'display': 'inline-block'}),
+
+                dcc.Graph(id='gini-scatterplot'),
+
+            ]),
+        ]),
     ]),
 
 ])
@@ -97,10 +142,7 @@ app.layout = html.Div([
      Input('yaxis-column', 'value'),
      Input('year', 'value')])
 def update_graph(xaxis_column_name, yaxis_column_name, year):
-    if year != 'All years':
-        dff = df[df.year == year]
-    else:
-        dff = df.copy()
+    dff = subset_years(df, year)
 
     return {
         'data': [go.Scatter(
@@ -131,14 +173,54 @@ def update_graph(xaxis_column_name, yaxis_column_name, year):
 
 
 @app.callback(
+    Output('gini-scatterplot', 'figure'),
+    [Input('gini-indicator', 'value'),
+     Input('year', 'value')])
+def update_gini(gini_ind, year):
+    # Team Record
+    dff = subset_years(df_wins, year)
+
+    # Gini coefficients
+    df_gini = subset_years(df_g, year)
+
+    dff = pd.merge(dff, df_gini)
+    dff = pd.merge(dff, palette_df, how='outer')
+    dff['team_year'] = dff.year.map(str) + ' ' + dff.team
+
+    return {
+        'data': [go.Scatter(
+            x=dff[gini_ind],
+            y=dff['Win_pct'],
+            text=dff.team_year,
+            # name=str(t),
+            mode='markers',
+            marker={
+                'size': 15,
+                'color': dff['color1'],
+                'line': {'width': 3,
+                         'color': dff['color2']}
+            }
+        )],
+        'layout': go.Layout(
+            xaxis={
+                'title': gini_ind,
+            },
+            yaxis={
+                'title': 'Win Percentage',
+            },
+            margin={'l': 40, 'b': 40, 't': 10, 'r': 0},
+            height=600,
+            hovermode='closest'
+        )
+    }
+
+
+@app.callback(
     Output('team-players', 'figure'),
     [Input('team', 'value'),
      Input('year', 'value')])
 def update_players(team, year):
-    if year != 'All years':
-        df1 = df_p[df_p.year == year]
-    else:
-        df1 = df_p.copy()
+    df1 = subset_years(df_p, year)
 
     df1 = df1[df1.team == team]
     dff = df1.groupby('player')[player_indicators].sum().reset_index()
@@ -172,10 +254,8 @@ def update_players(team, year):
     [Input('player-indicator', 'value'),
      Input('year', 'value')])
 def update_leaderboard(indicator, year):
-    if year != 'All years':
-        df1 = df_p[df_p.year == year]
-    else:
-        df1 = df_p.copy()
+    df1 = subset_years(df_p, year)
+
     dff = df1.groupby('player')[player_indicators].sum().reset_index()
 
     dff = dff.melt(id_vars='player', value_vars=player_indicators, var_name='indicator')

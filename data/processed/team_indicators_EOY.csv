@@ -1,0 +1,116 @@
+team,year,Wins,Losses,Win_pct
+Atlanta Hustle,2015,10,4,71.42857142857143
+Atlanta Hustle,2016,8,8,50.0
+Atlanta Hustle,2017,5,9,35.714285714285715
+Atlanta Hustle,2018,7,7,50.0
+Austin Sol,2016,7,7,50.0
+Austin Sol,2017,4,10,28.57142857142857
+Austin Sol,2018,6,9,40.0
+Charlotte Express,2015,2,12,14.285714285714285
+Charlotte Express,2016,4,10,28.57142857142857
+Chicago Wildfire,2014,9,6,60.0
+Chicago Wildfire,2015,7,5,58.333333333333336
+Chicago Wildfire,2016,4,9,30.76923076923077
+Chicago Wildfire,2017,3,11,21.428571428571427
+Chicago Wildfire,2018,5,9,35.714285714285715
+Cincinnati Revolution,2014,4,10,28.57142857142857
+Cincinnati Revolution,2015,2,12,14.285714285714285
+Cincinnati Revolution,2016,0,14,0.0
+DC Breeze,2014,10,5,66.66666666666666
+DC Breeze,2015,7,7,50.0
+DC Breeze,2016,11,5,68.75
+DC Breeze,2017,11,5,68.75
+DC Breeze,2018,8,6,57.14285714285714
+Dallas Roughnecks,2016,16,0,100.0
+Dallas Roughnecks,2017,13,4,76.47058823529412
+Dallas Roughnecks,2018,15,2,88.23529411764706
+Detroit Mechanix,2014,0,14,0.0
+Detroit Mechanix,2015,0,14,0.0
+Detroit Mechanix,2016,4,10,28.57142857142857
+Detroit Mechanix,2017,1,13,7.142857142857142
+Detroit Mechanix,2018,0,13,0.0
+Indianapolis AlleyCats,2014,8,7,53.333333333333336
+Indianapolis AlleyCats,2015,7,7,50.0
+Indianapolis AlleyCats,2016,8,6,57.14285714285714
+Indianapolis AlleyCats,2017,5,9,35.714285714285715
+Indianapolis AlleyCats,2018,12,4,75.0
+Jacksonville Cannons,2015,10,5,66.66666666666666
+Jacksonville Cannons,2016,5,9,35.714285714285715
+Jacksonville Cannons,2017,10,5,66.66666666666666
+Los Angeles Aviators,2015,5,9,35.714285714285715
+Los Angeles Aviators,2016,9,6,60.0
+Los Angeles Aviators,2017,10,6,62.5
+Los Angeles Aviators,2018,12,4,75.0
+Madison Radicals,2014,13,3,81.25
+Madison Radicals,2015,15,2,88.23529411764706
+Madison Radicals,2016,15,1,93.75
+Madison Radicals,2017,13,3,81.25
+Madison Radicals,2018,15,2,88.23529411764706
+Minnesota Wind Chill,2014,8,6,57.14285714285714
+Minnesota Wind Chill,2015,6,7,46.15384615384615
+Minnesota Wind Chill,2016,9,6,60.0
+Minnesota Wind Chill,2017,11,4,73.33333333333333
+Minnesota Wind Chill,2018,8,7,53.333333333333336
+Montreal Royal,2014,6,8,42.857142857142854
+Montreal Royal,2015,9,6,60.0
+Montreal Royal,2016,6,8,42.857142857142854
+Montreal Royal,2017,9,6,60.0
+Montreal Royal,2018,6,8,42.857142857142854
+Nashville NightWatch,2015,2,12,14.285714285714285
+Nashville NightWatch,2016,3,11,21.428571428571427
+Nashville NightWatch,2017,0,14,0.0
+Nashville NightWatch,2018,4,10,28.57142857142857
+New York Empire,2014,11,5,68.75
+New York Empire,2015,12,4,75.0
+New York Empire,2016,7,8,46.666666666666664
+New York Empire,2017,6,8,42.857142857142854
+New York Empire,2018,10,7,58.82352941176471
+Ottawa Outlaws,2015,7,7,50.0
+Ottawa Outlaws,2016,7,7,50.0
+Ottawa Outlaws,2017,2,12,14.285714285714285
+Ottawa Outlaws,2018,3,11,21.428571428571427
+Philadelphia Phoenix,2014,2,12,14.285714285714285
+Philadelphia Phoenix,2015,1,13,7.142857142857142
+Philadelphia Phoenix,2016,0,14,0.0
+Philadelphia Phoenix,2017,4,10,28.57142857142857
+Philadelphia Phoenix,2018,5,8,38.46153846153847
+Pittsburgh Thunderbirds,2015,13,3,81.25
+Pittsburgh Thunderbirds,2016,11,5,68.75
+Pittsburgh Thunderbirds,2017,10,6,62.5
+Pittsburgh Thunderbirds,2018,4,10,28.57142857142857
+Raleigh Flyers,2015,12,4,75.0
+Raleigh Flyers,2016,9,6,60.0
+Raleigh Flyers,2017,13,2,86.66666666666667
+Raleigh Flyers,2018,11,5,68.75
+Rochester Dragons,2014,1,13,7.142857142857142
+Rochester Dragons,2015,1,13,7.142857142857142
+Salt Lake Lions,2014,0,13,0.0
+San Diego Growlers,2015,7,7,50.0
+San Diego Growlers,2016,2,12,14.285714285714285
+San Diego Growlers,2017,7,7,50.0
+San Diego Growlers,2018,7,8,46.666666666666664
+San Francisco FlameThrowers,2014,11,4,73.33333333333333
+San Francisco FlameThrowers,2015,8,7,53.333333333333336
+San Francisco FlameThrowers,2016,11,4,73.33333333333333
+San Francisco FlameThrowers,2017,13,4,76.47058823529412
+San Francisco FlameThrowers,2018,5,9,35.714285714285715
+San Jose Spiders,2014,16,1,94.11764705882352
+San Jose Spiders,2015,13,4,76.47058823529412
+San Jose Spiders,2016,5,9,35.714285714285715
+San Jose Spiders,2017,8,7,53.333333333333336
+San Jose Spiders,2018,6,8,42.857142857142854
+Seattle Cascades,2015,9,7,56.25
+Seattle Cascades,2016,11,5,68.75
+Seattle Cascades,2017,7,7,50.0
+Seattle Cascades,2018,5,9,35.714285714285715
+Seattle Raptors,2014,3,11,21.428571428571427
+Tampa Bay Cannons,2018,4,10,28.57142857142857
+Toronto Rush,2014,15,1,93.75
+Toronto Rush,2015,14,2,87.5
+Toronto Rush,2016,13,3,81.25
+Toronto Rush,2017,13,4,76.47058823529412
+Toronto Rush,2018,13,2,86.66666666666667
+Vancouver Riptide,2014,8,6,57.14285714285714
+Vancouver Riptide,2015,4,10,28.57142857142857
+Vancouver Riptide,2016,6,8,42.857142857142854
+Vancouver Riptide,2017,1,13,7.142857142857142
