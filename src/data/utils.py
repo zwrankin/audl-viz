@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import pandas as pd
 from pathlib import Path
 
@@ -21,3 +22,20 @@ def clean_dates(df, colname):
     df['date'] = df.datetime.dt.date
     df['year'] = df.datetime.dt.year
     return df
+
+def gini(x):
+    """
+    Calculates the gini coefficient of a series
+    # https://stackoverflow.com/questions/39512260/calculating-gini-coefficient-in-python-numpy
+    # https://en.wikipedia.org/wiki/Gini_coefficient
+    :param x:
+    :return:
+    """
+
+    # Mean absolute difference
+    mad = np.abs(np.subtract.outer(x, x)).mean()
+    # Relative mean absolute difference
+    rmad = mad/np.mean(x)
+    # Gini coefficient
+    g = 0.5 * rmad
+    return g

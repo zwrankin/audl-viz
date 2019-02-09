@@ -9,6 +9,16 @@ def make_team_indicators(return_df = False):
 
     df = load_raw_data()
 
+    # Yearly team statistics, starting with total wins, losses
+    df_final = df[df.Action == 'GameOver']
+    df_final['Wins'] = 0
+    df_final['Losses'] = 0
+    df_final.loc[df_final['Our Score - End of Point'] < df_final['Their Score - End of Point'], 'Losses'] = 1
+    df_final.loc[df_final['Our Score - End of Point'] > df_final['Their Score - End of Point'], 'Wins'] = 1
+    df_final = df_final.groupby(['team', 'year'])['Wins', 'Losses'].sum().reset_index()
+    df_final.to_csv(f'{DATA_DIR}/processed/team_indicators_EOY.csv', index=False)
+
+
     # Make indicators
     dummies = pd.get_dummies(df['Action'])
     df = pd.concat([df, dummies], axis=1)
