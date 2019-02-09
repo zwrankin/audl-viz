@@ -61,6 +61,19 @@ app.layout = html.Div([
 
             ]),
         ]),
+        dcc.Tab(label='Team Explorer', children=[
+            html.Div([
+                dcc.Dropdown(
+                    id='team',
+                    options=[{'label': i, 'value': i} for i in df.team.sort_values().unique()],
+                    value='Atlanta Hustle'
+                ),
+
+                # html.H1('testing'),
+                dcc.Graph(id='team-players'),
+
+            ]),
+        ]),
         dcc.Tab(label='Individual Leaderboard', children=[
             html.Div([
                 dcc.Dropdown(
@@ -112,6 +125,43 @@ def update_graph(xaxis_column_name, yaxis_column_name, year):
             },
             margin={'l': 40, 'b': 40, 't': 10, 'r': 0},
             height=600,
+            hovermode='closest'
+        )
+    }
+
+
+@app.callback(
+    Output('team-players', 'figure'),
+    [Input('team', 'value'),
+     Input('year', 'value')])
+def update_players(team, year):
+    if year != 'All years':
+        df1 = df_p[df_p.year == year]
+    else:
+        df1 = df_p.copy()
+
+    df1 = df1[df1.team == team]
+    dff = df1.groupby('player')[player_indicators].sum().reset_index()
+    dff = dff.melt(id_vars='player', value_vars=player_indicators, var_name='indicator')
+
+    return {
+        'data': [go.Scatter(
+            x=dff[dff.player == p]['value'],
+            y=dff[dff.player == p]['indicator'],
+            name=p,
+            mode='markers',
+            marker={
+                'size': 10,
+                'opacity': 0.5,
+                # 'color': dff['color1'],
+                # 'line': {'width': 3,
+                #          'color': dff['color2']}
+            },
+        ) for p in dff.player.unique()],
+        'layout': go.Layout(
+            title=team,
+            height=600,
+            margin={'l': 120, 'b': 40, 't': 40, 'r': 0},
             hovermode='closest'
         )
     }
