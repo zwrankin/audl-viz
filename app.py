@@ -6,7 +6,7 @@ import pandas as pd
 import plotly.graph_objs as go
 from src.data.process_team_indicators import index_vars, team_indicators, player_indicators
 from src.data.utils import gini
-from src.visualization.utils import palette_df
+from src.visualization.utils import palette_df, palette
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -229,7 +229,7 @@ def update_gini(gini_ind, year):
      Input('year', 'value')])
 def update_gini_players(indicator, team, year):
     df1 = subset_years(df_p, year)
-    df1 = df1[df1.team == team]
+    # df1 = df1[df1.team == team]
 
     dff = df1.groupby('player')[player_indicators].sum().reset_index()
 
@@ -243,23 +243,33 @@ def update_gini_players(indicator, team, year):
         player_map = player_team[player_team['year'] == year]
     dff = pd.merge(player_map, dff)
     dff = pd.merge(dff, palette_df, how='outer').sort_values('value', ascending=False) # [:n_players]
-    dff = dff.sort_values('value', ascending=True)  # plotly seems to invert the order?
+    dff = dff.sort_values(['team', 'value'], ascending=True)  # plotly seems to invert the order?
+    dff['player_rank'] = dff.groupby('team')['value'].rank(ascending=False)
+    dff['player_team'] = dff['player'] + '_' + dff['team']
 
     return {
         'data': [go.Scatter(
-            x=dff['value'],
-            y=dff['player'],
-            text=dff['team'],
-            mode='markers',
+            x=dff[dff.team == team]['value'],
+            y=dff[dff.team == team]['player_rank'],
+            text=dff[dff.team == team]['player_team'],
+            name=team,
+            mode='markers+lines',
+            line={'color': palette[team][1] if team in palette.keys() else 'black'},
             marker={
-                'size': 15,
-                'color': dff['color1'],
-                'line': {'width': 3,
-                         'color': dff['color2']}
+                'size': 5,
+                'color': dff[dff.team == team]['color1'],
+                # 'line': {'width': 2,
+                #          'color': dff[dff.team == team]['color2']}
             },
-        )],
+        ) for team in dff.team.unique()],
         'layout': go.Layout(
-            title=indicator,
+            # title=indicator,
+            xaxis={
+                'title': indicator,
+            },
+            yaxis={
+                'title': 'Player Rank',
+            },
             height=600,
             margin={'l': 120, 'b': 40, 't': 40, 'r': 0},
             hovermode='closest'
