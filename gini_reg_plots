@@ -1,0 +1,38 @@
+            
+# Regression of win pct on gini coefficients
+lm = LinearRegression()
+r2 = []
+beta = []
+df_gini = pd.merge(df_g, df_wins)
+for i in player_indicators:
+    lm.fit(df_gini[[i]], df_gini['Win_pct'])
+    beta.append(lm.coef_[0])
+    r2.append(lm.score(df_gini[[i]], df_gini['Win_pct']))
+gini_r2 = pd.DataFrame({'indicator':player_indicators, 'beta':beta, 'r2':r2})
+
+
+
+
+            dcc.Graph(id='gini-reg-coef', 
+                          figure= {
+                        'data': [go.Scatter(
+                            x=gini_r2['beta'],
+                            y=gini_r2['indicator'],
+                            mode='markers',
+                            marker={
+                                'size': gini_r2['r2'] * 100,
+                                'color': 'black',
+                                # 'opacity': 1,
+                                # 'color': dff['color1'],
+                                # 'line': {'width': 3,
+                                #          'color': dff['color2']}
+                            },
+                        )],
+                        'layout': go.Layout(
+                            title='Title',
+                            height=400,
+                            margin={'l': 120, 'b': 40, 't': 40, 'r': 0},
+                            hovermode='closest'
+                        )
+                    }
+                ),
