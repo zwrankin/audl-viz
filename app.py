@@ -6,7 +6,7 @@ import pandas as pd
 import plotly.graph_objs as go
 from src.data.process_team_indicators import index_vars, team_indicators, player_indicators
 from src.data.utils import gini
-from src.visualization.utils import palette_df
+from src.visualization.utils import palette_df, palette
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -22,7 +22,7 @@ df_p = pd.read_csv('./data/processed/player_indicators.csv')
 player_team = df_p[['player', 'year', 'team']].drop_duplicates()
 
 df_g = pd.concat([pd.DataFrame(df_p.groupby(['team', 'year'])[i].apply(gini)) for i in player_indicators], axis=1)
-[df_g.rename(columns={i: i + '_gini'}, inplace=True) for i in player_indicators]
+## [df_g.rename(columns={i: i + '_gini'}, inplace=True) for i in player_indicators]
 df_g.reset_index(inplace=True)
 
 # Team records
@@ -62,6 +62,12 @@ app.layout = html.Div([
         labelStyle={'display': 'inline-block'},
     ),
 
+    dcc.Dropdown(
+        id='team',
+        options=[{'label': i, 'value': i} for i in df.team.sort_values().unique()],
+        value='Atlanta Hustle'
+    ),
+
     dcc.Tabs(id="tabs", style={
         'textAlign': 'center', 'margin': '48px 0', 'fontFamily': 'system-ui'}, children=[
 
@@ -89,11 +95,6 @@ app.layout = html.Div([
         ]),
         dcc.Tab(label='Team Explorer', children=[
             html.Div([
-                dcc.Dropdown(
-                    id='team',
-                    options=[{'label': i, 'value': i} for i in df.team.sort_values().unique()],
-                    value='Atlanta Hustle'
-                ),
 
                 dcc.Graph(id='team-players'),
 
@@ -121,13 +122,19 @@ app.layout = html.Div([
 
                     dcc.Dropdown(
                         id='gini-indicator',
-                        options=[{'label': f'{i}_gini', 'value': f'{i}_gini'} for i in player_indicators],
-                        value='Goals_gini'
+                        # options=[{'label': f'{i}_gini', 'value': f'{i}_gini'} for i in player_indicators],
+                        options=[{'label': i, 'value': i} for i in player_indicators],
+                        value='Goals'
                     ),
+                    
+                    dcc.Graph(id='gini-scatterplot'),
                 ],
                     style={'width': '48%', 'display': 'inline-block'}),
 
-                dcc.Graph(id='gini-scatterplot'),
+                html.Div([
+                        dcc.Graph(id='gini-players'),
+                ],
+                    style={'width': '48%', 'display': 'inline-block'}),
 
             ]),
         ]),
@@ -203,7 +210,7 @@ def update_gini(gini_ind, year):
         )],
         'layout': go.Layout(
             xaxis={
-                'title': gini_ind,
+                'title': f'{gini_ind} gini coefficient',
             },
             yaxis={
                 'title': 'Win Percentage',
@@ -214,6 +221,62 @@ def update_gini(gini_ind, year):
         )
     }
 
+
+@app.callback(
+    Output('gini-players', 'figure'),
+    [Input('gini-indicator', 'value'),
+     Input('team', 'value'),
+     Input('year', 'value')])
+def update_gini_players(indicator, team, year):
+    df1 = subset_years(df_p, year)
+    # df1 = df1[df1.team == team]
+
+    dff = df1.groupby('player')[player_indicators].sum().reset_index()
+
+    dff = dff.melt(id_vars='player', value_vars=player_indicators, var_name='indicator')
+    # n_players = 30
+    dff = dff[dff.indicator == indicator]
+    # Get correct team & color for specific year
+    if year == 'All years':
+        player_map = player_team[player_team['year'] == 2018]
+    else:
+        player_map = player_team[player_team['year'] == year]
+    dff = pd.merge(player_map, dff)
+    dff = pd.merge(dff, palette_df, how='outer').sort_values('value', ascending=False) # [:n_players]
+    dff = dff.sort_values(['team', 'value'], ascending=True)  # plotly seems to invert the order?
+    dff['player_rank'] = dff.groupby('team')['value'].rank(ascending=False)
+    dff['player_team'] = dff['player'] + '_' + dff['team']
+
+    return {
+        'data': [go.Scatter(
+            x=dff[dff.team == team]['value'],
+            y=dff[dff.team == team]['player_rank'],
+            text=dff[dff.team == team]['player_team'],
+            name=team,
+            mode='markers+lines',
+            line={'color': palette[team][1] if team in palette.keys() else 'black'},
+            marker={
+                'size': 5,
+                'color': dff[dff.team == team]['color1'],
+                # 'line': {'width': 2,
+                #          'color': dff[dff.team == team]['color2']}
+            },
+        ) for team in dff.team.unique()],
+        'layout': go.Layout(
+            # title=indicator,
+            xaxis={
+                'title': indicator,
+            },
+            yaxis={
+                'title': 'Player Rank',
+            },
+            height=600,
+            margin={'l': 120, 'b': 40, 't': 40, 'r': 0},
+            hovermode='closest'
+        )
+    }
+
+    
 
 @app.callback(
     Output('team-players', 'figure'),
