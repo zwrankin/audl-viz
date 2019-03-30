@@ -204,7 +204,7 @@ def update_players(team, year, indicators):
     Output('team-timeseries', 'figure'),
     [Input('team', 'value'),
      Input('year', 'value'),
-     Input('team-eoy-indicators', 'value')
+     Input('team-indicators', 'value')
      ])
 def update_team_timeseries(team, year, indicators):
     df1 = subset_years(df_t, year)
