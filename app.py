@@ -30,15 +30,15 @@ top_markdown_text = '''
 '''
 
 bottom_markdown_text = '''
-Data downloaded from [AUDL-pull](https://github.com/dfiorino/audl-pull) by Dan Fiorino  
+Data downloaded from [AUDL-pull](https://github.com/dfiorino/audl-pull) (credit Dan Fiorino)  
 Visualization by Zane Rankin using Plotly and Dash - [Github](https://github.com/zwrankin/audl-viz)
 '''
 
 app.layout = html.Div([
 
-    dcc.Markdown(children=top_markdown_text),
-
-    html.H6('Season for Analysis'),
+    html.Img(src='/assets/audl_logo2.png', style=dict(height='35%', width='35%')),
+    
+    html.H6('Season'),
     dcc.RadioItems(
         id='year',
         options=[{'label': i, 'value': i} for i in [2014, 2015, 2016, 2017, 2018, 'All years']],
@@ -50,7 +50,7 @@ app.layout = html.Div([
         'textAlign': 'center', 'margin': '48px 0', 'fontFamily': 'system-ui'}, children=[
 
         
-        dcc.Tab(label='Leaderboard', children=[
+        dcc.Tab(label='Individual Leaderboard', children=[
             html.Div([
                 dcc.Dropdown(
                     id='player-indicator',
@@ -102,13 +102,14 @@ app.layout = html.Div([
                             multi=True,
                             value=['Win_pct', 'Hold_pct', 'Break_pct']
                         ),
+                    html.H6('Metric'),
                     dcc.RadioItems(
                             id='metric',
                             options=[{'label': i, 'value': i} for i in ['rank', 'value']],
                             value='rank',
                             labelStyle={'display': 'inline-block'},
                             ),
-                    html.P('Note: For all ranks, highest value is ranked #1'),
+                    dcc.Markdown('*Note: For all ranks, highest value is ranked #1*'),
                     dcc.Graph(id='team-comparison')
 
             ]),
@@ -269,6 +270,7 @@ def update_team_comparison(year, indicators, metric):
         ) for t in dff.team.unique()],
         'layout': go.Layout(
             # title=team,
+            xaxis=dict(title=metric, titlefont=dict(size=24)),
             height=600,
             margin={'l': 120, 'b': 40, 't': 40, 'r': 40},
             hovermode='closest'
