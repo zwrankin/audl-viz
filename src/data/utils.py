@@ -23,6 +23,14 @@ def clean_dates(df, colname):
     df['year'] = df.datetime.dt.year
     return df
 
+
+def subset_years(df, year):
+    if year != 'All years':
+        return df[df.year == year]
+    else:
+        return df
+    
+    
 def gini(x):
     """
     Calculates the gini coefficient of a series

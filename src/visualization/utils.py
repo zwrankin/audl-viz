@@ -31,3 +31,10 @@ palette = {
 palette_df = pd.DataFrame.from_dict(palette, orient='index', columns=['color1', 'color2'])
 palette_df.index.rename('team', inplace=True)
 palette_df.reset_index(inplace=True)
+
+def map_colors(x, palette, n):
+    if x in palette.keys():
+        return palette[x][n]
+    else: 
+        return '#000000'
+    

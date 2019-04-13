@@ -2,24 +2,14 @@ import pandas as pd
 from .utils import DATA_DIR, load_raw_data
 
 index_vars = ['year', 'team', 'opponent', 'date', 'game']
-team_indicators = ['Goals', 'Catches', 'Ds', 'Turnovers', 'Drops', 'Throwaways', 'Goals_against']
+team_indicators = ['Goals', 'Catches', 'Ds', 'Turnovers', 'Drops', 'Throwaways', 'Goals_against',
+                  'Hold_pct', 'Break_pct']
+team_eoy_indicators = team_indicators + ['Win_pct'] # ['Win_pct', 'Hold_pct', 'Break_pct']
 player_indicators  = ['Completions', 'Assists', 'Throwaways', 'Receptions', 'Goals', 'Drops', 'Ds', 'Turnovers', 'Plus_Minus']
 
 def make_team_indicators(return_df = False):
 
     df = load_raw_data()
-
-    # Yearly team statistics, starting with total wins, losses
-    df_final = df[df.Action == 'GameOver']
-    df_final['Wins'] = 0
-    df_final['Losses'] = 0
-    df_final.loc[df_final['Our Score - End of Point'] < df_final['Their Score - End of Point'], 'Losses'] = 1
-    df_final.loc[df_final['Our Score - End of Point'] > df_final['Their Score - End of Point'], 'Wins'] = 1
-    df_final = df_final.groupby(['team', 'year'])['Wins', 'Losses'].sum().reset_index()
-    df_final['Win_pct'] = df_final.Wins / (df_final.Wins + df_final.Losses) * 100
-
-    df_final.to_csv(f'{DATA_DIR}/processed/team_indicators_EOY.csv', index=False)
-
 
     # Make indicators
     dummies = pd.get_dummies(df['Action'])
@@ -29,6 +19,14 @@ def make_team_indicators(return_df = False):
     df['Goals_against'] = 0
     df.loc[df['Event Type'] == 'Defense', 'Goals_against'] = df['Goal']
     df.loc[df['Event Type'] == 'Defense', 'Goal'] = 0
+    
+    is_goal = df['Action'] == "Goal"
+    is_oline = df['Line'] == 'O'
+    df.loc[(is_goal) & (is_oline) & (df['Event Type'] == 'Offense'), 'Hold_pct'] = 1
+    df.loc[(is_goal) & (is_oline) & (df['Event Type'] == 'Defense'), 'Hold_pct'] = 0
+    df.loc[(is_goal) & (~is_oline) & (df['Event Type'] == 'Offense'), 'Break_pct'] = 1
+    df.loc[(is_goal) & (~is_oline) & (df['Event Type'] == 'Defense'), 'Break_pct'] = 0
+    
     # Let's be intensional with indicator names
     rename_ind_dict = {
         'Goal': 'Goals',
@@ -40,11 +38,27 @@ def make_team_indicators(return_df = False):
     df.rename(columns=rename_ind_dict, inplace=True)
 
     # Reshape wide and save - NOTE that normally I'd do hdf but was having dash compatability issues so csv it is
-    df_wide = df.groupby(index_vars)[team_indicators].sum().reset_index()
+    # df_wide = df.groupby(index_vars)[team_indicators].sum().reset_index()
+    df_wide = pd.merge(
+        df.groupby(index_vars)[[i for i in team_indicators if 'pct' not in i]].sum().reset_index(),
+        df.groupby(index_vars)[[i for i in team_indicators if 'pct' in i]].mean().reset_index(),
+        on=index_vars, how='outer')
     df_wide.to_csv(f'{DATA_DIR}/processed/team_indicators.csv', index=False)
+    
+    # Yearly team statistics
+    game_over = df.Action == 'GameOver'
+    scored_more_points = df['Our Score - End of Point'] > df['Their Score - End of Point']
+    df.loc[(game_over) & (scored_more_points), 'Win_pct'] = 1
+    df.loc[(game_over) & (~scored_more_points), 'Win_pct'] = 0
+    df_final = pd.merge(
+        df.groupby(['year', 'team'])[[i for i in team_eoy_indicators if 'pct' not in i]].sum().reset_index(),
+        df.groupby(['year', 'team'])[[i for i in team_eoy_indicators if 'pct' in i]].mean().reset_index(),
+        on=['year', 'team'], how='outer')
+    df_final.to_csv(f'{DATA_DIR}/processed/team_indicators_EOY.csv', index=False)
 
     if return_df:
         return df_wide
+
 
 
 def make_player_indicators(return_df=False):
