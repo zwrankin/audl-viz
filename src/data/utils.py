@@ -29,7 +29,13 @@ def subset_years(df, year):
         return df[df.year == year]
     else:
         return df
-    
+
+
+def apply_game_threshold(df, n_games=1):
+    total_games = df.groupby('player')['Games Played'].sum().reset_index().rename({'Games Played': 'total_games'}, axis=1)
+    df = pd.merge(df, total_games)
+    return df.loc[df.total_games >= n_games].drop('total_games', axis=1)
+
     
 def gini(x):
     """

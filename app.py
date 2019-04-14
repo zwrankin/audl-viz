@@ -1,11 +1,12 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_daq as daq
 from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.graph_objs as go
 from src.data.process_team_indicators import index_vars, team_indicators, player_indicators, team_eoy_indicators
-from src.data.utils import subset_years
+from src.data.utils import subset_years, apply_game_threshold
 from src.visualization.utils import palette_df, palette, map_colors
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -87,6 +88,11 @@ app.layout = html.Div([
                             multi=True,
                             value=['Plus_Minus', 'Goals', 'Assists', 'Ds', 'Turnovers']
                         ),
+                    daq.NumericInput(
+                        id='min-games',
+                        label='Minimum Games Played',
+                        value=4,
+                    ),
                     dcc.Graph(id='team-players'),
 
             ]),
@@ -169,11 +175,13 @@ def update_leaderboard(indicator, year):
     Output('team-players', 'figure'),
     [Input('team', 'value'),
      Input('year', 'value'),
-     Input('player-indicators', 'value')])
-def update_players(team, year, indicators):
+     Input('player-indicators', 'value'),
+     Input('min-games', 'value')])
+def update_players(team, year, indicators, min_games):
     df1 = subset_years(df_p, year)
 
     df1 = df1[df1.team == team]
+    df1 = apply_game_threshold(df1, n_games=min_games)
     dff = df1.groupby('player')[player_indicators].sum().reset_index()
     dff = dff.melt(id_vars='player', value_vars=indicators, var_name='indicator')
     
