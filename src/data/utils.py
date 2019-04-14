@@ -36,7 +36,19 @@ def apply_game_threshold(df, n_games=1):
     df = pd.merge(df, total_games)
     return df.loc[df.total_games >= n_games].drop('total_games', axis=1)
 
-    
+
+def aggregate_rates(df, indicators, rate_type='count'):
+    if rate_type == 'count':
+        pass
+    elif rate_type == 'per_game':
+        for i in indicators:
+            df[i] = df[i] / df['Games Played']
+    elif rate_type == 'per_point':
+        for i in indicators:
+            df[i] = df[i] / df['Points Played']
+    return df
+
+
 def gini(x):
     """
     Calculates the gini coefficient of a series
