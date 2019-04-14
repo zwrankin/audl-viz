@@ -1,10 +1,12 @@
 AUDL Data Visualization
 ==============================
 
-Visualization of data from the American Ultimate Disc League (AUDL)
+Interaction visualization of data from the [American Ultimate Disc League](https://www.theaudl.com) 
 
-### Visualization (preliminary!)
 **https://audl-viz.herokuapp.com/**  
+![](images/app_screenshot.png)
+
+
 Visualization built in [Dash](https://plot.ly/products/dash/) and hosted on [Heroku](https://www.heroku.com/).  
 For a technical guide to Dash development, 
 refer to my [Medium article](https://towardsdatascience.com/a-gentle-introduction-to-dash-development-and-deployment-f8b91990d3bd)
