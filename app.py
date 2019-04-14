@@ -36,10 +36,13 @@ Visualization by Zane Rankin using Plotly and Dash - [Github](https://github.com
 '''
 
 app.layout = html.Div([
+    html.A([
+        html.Img(
+            src='/assets/audl_logo2.png',
+            style=dict(height='35%', width='35%'))],
+        href='https://www.theaudl.com'),
 
-    html.Img(src='/assets/audl_logo2.png', style=dict(height='35%', width='35%')),
-    
-    html.H6('Season'),
+html.H6('Season'),
     dcc.RadioItems(
         id='year',
         options=[{'label': i, 'value': i} for i in [2014, 2015, 2016, 2017, 2018, 'All years']],
