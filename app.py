@@ -36,10 +36,13 @@ Visualization by Zane Rankin using Plotly and Dash - [Github](https://github.com
 '''
 
 app.layout = html.Div([
+    html.A([
+        html.Img(
+            src='/assets/audl_logo2.png',
+            style=dict(height='35%', width='35%'))],
+        href='https://www.theaudl.com'),
 
-    html.Img(src='/assets/audl_logo2.png', style=dict(height='35%', width='35%')),
-    
-    html.H6('Season'),
+html.H6('Season'),
     dcc.RadioItems(
         id='year',
         options=[{'label': i, 'value': i} for i in [2014, 2015, 2016, 2017, 2018, 'All years']],
@@ -56,11 +59,12 @@ app.layout = html.Div([
                 dcc.Dropdown(
                     id='player-indicator',
                     options=[{'label': i, 'value': i} for i in player_indicators],
-                    value='Goals'
+                    value='Goals',
+                    style={'width': 600}
                 ),
                 dcc.RadioItems(
                     id='rate-type1',
-                    options=[{'label': i, 'value': i} for i in ['count', 'per_point', 'per_game']],
+                    options=[{'label': i, 'value': i} for i in ['count', 'per point', 'per game']],
                     value='count',
                     labelStyle={'display': 'inline-block'},
                 ),
@@ -79,28 +83,31 @@ app.layout = html.Div([
                     dcc.Dropdown(
                             id='team',
                             options=[{'label': i, 'value': i} for i in df_t.team.sort_values().unique()],
-                            value='Atlanta Hustle'
+                            value='Atlanta Hustle',
+                            style={'fontSize': 24, 'width': 600, 'verticalAlign': 'middle'},
                             ),
                             
-                    html.H5('Team Stats'),
+                    html.H6('Team Stats'),
                     dcc.Dropdown(
                             id='team-indicators',
                             options=[{'label': i, 'value': i} for i in team_indicators],
                             multi=True,
-                            value=['Break_pct', 'Hold_pct']
+                            value=['Break_pct', 'Hold_pct'],
+                            style={'width': 600}
                         ),
                     dcc.Graph(id='team-timeseries'),
                             
-                    html.H5('Individual Stats'),
+                    html.H6('Individual Stats'),
                     dcc.Dropdown(
                             id='player-indicators',
                             options=[{'label': i, 'value': i} for i in player_indicators],
                             multi=True,
-                            value=['Plus_Minus', 'Goals', 'Assists', 'Ds', 'Turnovers']
+                            value=['Plus_Minus', 'Goals', 'Assists', 'Ds', 'Turnovers'],
+                            style={'width': 600}
                         ),
                     dcc.RadioItems(
                         id='rate-type',
-                        options=[{'label': i, 'value': i} for i in ['count', 'per_point', 'per_game']],
+                        options=[{'label': i, 'value': i} for i in ['count', 'per point', 'per game']],
                         value='count',
                         labelStyle={'display': 'inline-block'},
                     ),
@@ -122,8 +129,9 @@ app.layout = html.Div([
                             id='team-eoy-indicators',
                             options=[{'label': i, 'value': i} for i in team_eoy_indicators],
                             multi=True,
-                            value=['Win_pct', 'Hold_pct', 'Break_pct']
-                        ),
+                            value=['Win_pct', 'Hold_pct', 'Break_pct'],
+                            style={'width': 600}
+                    ),
                     html.H6('Metric'),
                     dcc.RadioItems(
                             id='metric',
