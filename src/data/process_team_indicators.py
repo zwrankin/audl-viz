@@ -5,7 +5,24 @@ index_vars = ['year', 'team', 'opponent', 'date', 'game']
 team_indicators = ['Goals', 'Catches', 'Ds', 'Turnovers', 'Drops', 'Throwaways', 'Goals_against',
                   'Hold_pct', 'Break_pct']
 team_eoy_indicators = team_indicators + ['Win_pct'] # ['Win_pct', 'Hold_pct', 'Break_pct']
-player_indicators  = ['Completions', 'Assists', 'Throwaways', 'Receptions', 'Goals', 'Drops', 'Ds', 'Turnovers', 'Plus_Minus']
+player_indicators  = ['Completions', 'Assists', 'Throwaways', 'Receptions', 'Goals', 'Drops', 'Ds',
+                      'Turnovers', 'Plus_Minus', 'Points Played', 'Games Played']
+
+
+# TODO - These functions taken from audl-pull, need to refactor!
+def GetPlayers(df_in):
+    return df_in['Lineup'].str.split(', ').apply(pd.Series).stack().unique()
+def GetGamesPlayed(df_in,plyr):
+    return df_in[df_in['Lineup'].str.contains(plyr,na=False)].groupby(['GameID']).ngroups
+def GetPointsPlayed(df_in,plyr):
+    return df_in[(df_in['Event Type']!='Cessation') & df_in['Lineup'].str.contains(plyr,na=False)].groupby(['GameID','PointID']).ngroups
+def PlayStatsByPlayer(df_in):
+    plyrs = GetPlayers(df_in)
+    return pd.DataFrame([{'player': p,
+                          'Games Played': GetGamesPlayed(df_in,p),
+                          'Points Played': GetPointsPlayed(df_in,p)
+                          } for p in plyrs])
+
 
 def make_team_indicators(return_df = False):
 
@@ -98,12 +115,14 @@ def make_player_indicators(return_df=False):
     df_d['Ds'] = 0
     df_d.loc[df_r['Action'] == 'D', 'Ds'] = 1
 
-    # TODO - Points Played
-
     df_all = pd.concat([df_p, df_r, df_d], sort=False)
 
-    inds  = player_indicators(['Turnovers', 'Plus_Minus'])
+    inds = [i for i in player_indicators if i not in ['Turnovers', 'Plus_Minus', 'Points Played', 'Games Played']]
     df_wide = df_all.groupby(index_vars + ['player'])[inds].sum().reset_index()
+
+    # Points played
+    df_points = df.groupby('game').apply(PlayStatsByPlayer).reset_index().drop('level_1', axis=1)
+    df_wide = pd.merge(df_wide, df_points)
 
     # Aggregates:
     df_wide['Turnovers'] = df_wide.Throwaways + df_wide.Drops

@@ -1,11 +1,12 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_daq as daq
 from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.graph_objs as go
 from src.data.process_team_indicators import index_vars, team_indicators, player_indicators, team_eoy_indicators
-from src.data.utils import subset_years
+from src.data.utils import subset_years, apply_game_threshold, aggregate_rates
 from src.visualization.utils import palette_df, palette, map_colors
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -57,7 +58,17 @@ app.layout = html.Div([
                     options=[{'label': i, 'value': i} for i in player_indicators],
                     value='Goals'
                 ),
-
+                dcc.RadioItems(
+                    id='rate-type1',
+                    options=[{'label': i, 'value': i} for i in ['count', 'per_point', 'per_game']],
+                    value='count',
+                    labelStyle={'display': 'inline-block'},
+                ),
+                daq.NumericInput(
+                    id='min-games1',
+                    label='Minimum Games Played',
+                    value=4,
+                ),
                 dcc.Graph(id='leaderboard'),
 
             ]),
@@ -87,6 +98,17 @@ app.layout = html.Div([
                             multi=True,
                             value=['Plus_Minus', 'Goals', 'Assists', 'Ds', 'Turnovers']
                         ),
+                    dcc.RadioItems(
+                        id='rate-type',
+                        options=[{'label': i, 'value': i} for i in ['count', 'per_point', 'per_game']],
+                        value='count',
+                        labelStyle={'display': 'inline-block'},
+                    ),
+                    daq.NumericInput(
+                        id='min-games',
+                        label='Minimum Games Played',
+                        value=4,
+                    ),
                     dcc.Graph(id='team-players'),
 
             ]),
@@ -125,11 +147,15 @@ app.layout = html.Div([
 @app.callback(
     Output('leaderboard', 'figure'),
     [Input('player-indicator', 'value'),
-     Input('year', 'value')])
-def update_leaderboard(indicator, year):
+     Input('year', 'value'),
+     Input('rate-type1', 'value'),
+     Input('min-games1', 'value')])
+def update_leaderboard(indicator, year, rate_type, min_games):
     df1 = subset_years(df_p, year)
+    df1 = apply_game_threshold(df1, n_games=min_games)
 
     dff = df1.groupby('player')[player_indicators].sum().reset_index()
+    dff = aggregate_rates(dff, player_indicators, rate_type)
 
     dff = dff.melt(id_vars='player', value_vars=player_indicators, var_name='indicator')
     n_players = 15
@@ -169,12 +195,16 @@ def update_leaderboard(indicator, year):
     Output('team-players', 'figure'),
     [Input('team', 'value'),
      Input('year', 'value'),
-     Input('player-indicators', 'value')])
-def update_players(team, year, indicators):
+     Input('player-indicators', 'value'),
+     Input('min-games', 'value'),
+     Input('rate-type', 'value')])
+def update_players(team, year, indicators, min_games, rate_type):
     df1 = subset_years(df_p, year)
 
     df1 = df1[df1.team == team]
+    df1 = apply_game_threshold(df1, n_games=min_games)
     dff = df1.groupby('player')[player_indicators].sum().reset_index()
+    dff = aggregate_rates(dff, player_indicators, rate_type)
     dff = dff.melt(id_vars='player', value_vars=indicators, var_name='indicator')
     
     dff['indicator'] = pd.Categorical(dff.indicator, indicators)
