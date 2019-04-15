@@ -49,6 +49,19 @@ def aggregate_rates(df, indicators, rate_type='count'):
     return df
 
 
+def make_sankey_df(df, team='Chicago Wildfire', year=2018, line='O'):
+    """df must have Passer, Receiver, Line"""
+    df = subset_years(df, year)
+    df = df.loc[df.team == team]
+    if line != 'both':
+        df = df.loc[df.Line == line]
+    df = df[['Passer', 'Receiver']]
+    # There's a bug where plotly sankeys can't handle circularity, so add suffixes to make entities different
+    # https://community.plot.ly/t/sankey-diagram-handling-circularity-error/15102/3
+    df['Receiver'] = df.Receiver + ' '
+    return df.groupby(['Passer', 'Receiver']).agg(lambda x: len(x)).reset_index().rename(columns={0:'Value'})
+
+
 def gini(x):
     """
     Calculates the gini coefficient of a series
