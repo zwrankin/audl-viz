@@ -98,7 +98,17 @@ html.H6('Season'),
                             value=['Break_pct', 'Hold_pct'],
                             style={'width': 600}
                         ),
+
+
                     dcc.Graph(id='team-timeseries'),
+
+                    # dcc.Graph(id='o-conversion'),
+                    html.Div([
+                        dcc.Graph(id='o-conversion'),
+                    ], style={'float': 'left', 'width': '45%'}),
+                    html.Div([
+                        dcc.Graph(id='d-conversion'),
+                    ], style={'float': 'right', 'width': '45%'}),
 
                     html.Div([
                         dcc.Graph(id='o-sankey'),
@@ -160,6 +170,21 @@ html.H6('Season'),
     dcc.Markdown(children=bottom_markdown_text),
 
 ])
+
+
+@app.callback(
+    Output('o-conversion', 'figure'),
+    [Input('team', 'value'),
+     Input('year', 'value')])
+def update_o_conversion(team, year):
+    return make_conversion_plot(team, year, line='Offense')
+
+@app.callback(
+    Output('d-conversion', 'figure'),
+    [Input('team', 'value'),
+     Input('year', 'value')])
+def update_d_conversion(team, year):
+    return make_conversion_plot(team, year, line='Defense')
 
 
 @app.callback(
@@ -376,6 +401,42 @@ def make_sankey(team, year, line):
             title=title,
             height=700, # width=600,
             # margin={'l': 120, 'b': 40, 't': 40, 'r': 0},
+            hovermode='closest'
+        )
+    }
+
+
+def make_conversion_plot(team, year, line):
+    """TODO - refactor so easier to move to viz utils, for now it has too many dependencies"""
+    df1 = subset_years(df_p, year)
+
+    df1 = df1[df1.team == team]
+    # print(df1.shape)
+    # print(df1.columns)
+    # title = 'Goals'
+    # if line == 'O':
+    #     title = "Holds"
+    # elif line == 'D':
+    #     title = "Breaks"
+
+
+    return {
+        'data': [go.Scatter(
+            x=df1[f'Points Played ({line})'],
+            y=df1[f'conversion rate ({line})'],
+            # name=p,
+            mode='markers',
+            # marker={
+            #     'size': 10,
+            #     'opacity': 0.5,
+            #     # 'line': {'width': 0}
+            # },
+            # line={'width': 0.4}
+        )],
+        'layout': go.Layout(
+            # title=team,
+            height=600,
+            margin={'l': 120, 'b': 40, 't': 40, 'r': 40},
             hovermode='closest'
         )
     }
