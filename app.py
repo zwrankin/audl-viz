@@ -5,7 +5,7 @@ import dash_daq as daq
 from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.graph_objs as go
-from src.data.process_team_indicators import index_vars, team_indicators, player_indicators, team_eoy_indicators
+from src.data.process_team_indicators import index_vars, player_index_vars, team_indicators, team_eoy_indicators
 from src.data.utils import subset_years, apply_game_threshold, aggregate_rates, make_sankey_df
 from src.visualization.utils import palette_df, palette, map_colors
 
@@ -22,6 +22,7 @@ df_t['opponent_color1'] = df_t.opponent.transform(lambda x: map_colors(x, palett
 df_t['opponent_color2'] = df_t.opponent.transform(lambda x: map_colors(x, palette, 1))
 
 df_p = pd.read_csv('./data/processed/player_indicators.csv')
+player_indicators = [i for i in df_p.columns if i not in player_index_vars]
 player_team = df_p[['player', 'year', 'team']].drop_duplicates()
 
 df_eoy = pd.read_csv('./data/processed/team_indicators_EOY.csv')
@@ -220,7 +221,7 @@ def update_leaderboard(indicator, year, rate_type, min_games):
             hovermode='closest'
         )
     }
-    
+
 
 @app.callback(
     Output('team-players', 'figure'),
