@@ -6,7 +6,7 @@ from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.graph_objs as go
 from src.data.process_team_indicators import index_vars, team_indicators, player_indicators, team_eoy_indicators
-from src.data.utils import subset_years, apply_game_threshold, aggregate_rates
+from src.data.utils import subset_years, apply_game_threshold, aggregate_rates, make_sankey_df
 from src.visualization.utils import palette_df, palette, map_colors
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -25,6 +25,8 @@ df_p = pd.read_csv('./data/processed/player_indicators.csv')
 player_team = df_p[['player', 'year', 'team']].drop_duplicates()
 
 df_eoy = pd.read_csv('./data/processed/team_indicators_EOY.csv')
+
+df_goals = pd.read_csv('./data/processed/all_goals.csv')
 
 top_markdown_text = '''
 ###  AUDL Data Visualization Prototype
@@ -87,7 +89,7 @@ html.H6('Season'),
                             style={'fontSize': 24, 'width': 600, 'verticalAlign': 'middle'},
                             ),
                             
-                    html.H6('Team Stats'),
+                    # html.H6('Team Stats'),
                     dcc.Dropdown(
                             id='team-indicators',
                             options=[{'label': i, 'value': i} for i in team_indicators],
@@ -96,8 +98,15 @@ html.H6('Season'),
                             style={'width': 600}
                         ),
                     dcc.Graph(id='team-timeseries'),
-                            
-                    html.H6('Individual Stats'),
+
+                    html.Div([
+                        dcc.Graph(id='o-sankey'),
+                    ], style={'float': 'left', 'width': '45%'}),
+                    html.Div([
+                        dcc.Graph(id='d-sankey'),
+                    ], style={'float': 'right', 'width': '45%'}),
+
+                    # html.H6('Individual Stats'),
                     dcc.Dropdown(
                             id='player-indicators',
                             options=[{'label': i, 'value': i} for i in player_indicators],
@@ -150,7 +159,21 @@ html.H6('Season'),
     dcc.Markdown(children=bottom_markdown_text),
 
 ])
-                
+
+
+@app.callback(
+        Output('o-sankey', 'figure'),
+        [Input('team', 'value'),
+         Input('year', 'value')])
+def update_o_sankey(team, year):
+    return make_sankey(team, year, line='O')
+
+@app.callback(
+    Output('d-sankey', 'figure'),
+    [Input('team', 'value'),
+     Input('year', 'value')])
+def update_d_sankey(team, year):
+    return make_sankey(team, year, line='D')
 
 @app.callback(
     Output('leaderboard', 'figure'),
@@ -314,7 +337,48 @@ def update_team_comparison(year, indicators, metric):
             hovermode='closest'
         )
     }
-    
+
+
+def make_sankey(team, year, line):
+    """TODO - refactor so easier to move to viz utils, for now it has too many dependencies"""
+    data = make_sankey_df(df_goals, team, year, line)
+    # Plotly sankey needs numeric ids, not names
+    players = set(data.Passer.tolist() + data.Receiver.tolist())
+    player_dict = {j:i for i,j in enumerate(players)}
+    data['Source'] = data.Passer.map(player_dict)
+    data['Target'] = data.Receiver.map(player_dict)
+    title = 'Goals'
+    if line == 'O':
+        title = "Holds"
+    elif line == 'D':
+        title = "Breaks"
+    data_trace = dict(
+        type='sankey',
+        node = dict(
+            # pad = 15,
+            # thickness = 15,
+            # line = dict(
+            #     color = "black",
+            #     width = 0.5
+            # ),
+            label = list(player_dict.keys()),
+        ),
+        link = dict(
+            source =  data['Source'],
+            target =  data['Target'],
+            value =  data['Value'],
+        ))
+
+    return {
+        'data': [data_trace],
+        'layout': go.Layout(
+            title=title,
+            height=700, # width=600,
+            # margin={'l': 120, 'b': 40, 't': 40, 'r': 0},
+            hovermode='closest'
+        )
+    }
+
     
 if __name__ == '__main__':
     app.run_server(debug=True)

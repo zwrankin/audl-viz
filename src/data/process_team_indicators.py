@@ -133,9 +133,17 @@ def make_player_indicators(return_df=False):
     if return_df:
         return df_wide
 
-
+def save_all_goals(return_df=False):
+    """Save all goals in format for Sanke plots"""
+    df = load_raw_data()
+    cols = ['team', 'year', 'Passer', 'Receiver', 'Line']
+    df = df.loc[(df.Action == "Goal") & (df['Event Type'] == 'Offense')][cols].dropna(how='any')
+    df.to_csv(f'{DATA_DIR}/processed/all_goals.csv', index=False)
+    if return_df:
+        return df
 
 
 if __name__ == '__main__':
     make_team_indicators()
     make_player_indicators()
+    save_all_goals()
