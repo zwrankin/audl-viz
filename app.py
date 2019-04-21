@@ -102,20 +102,19 @@ html.H6('Season'),
 
                     dcc.Graph(id='team-timeseries'),
 
-                    # dcc.Graph(id='o-conversion'),
                     html.Div([
                         dcc.Graph(id='o-conversion'),
-                    ], style={'float': 'left', 'width': '45%'}),
+                    ], style={'float': 'left', 'width': '48%', 'marginTop': 50, 'marginBottom': 0}),
                     html.Div([
                         dcc.Graph(id='d-conversion'),
-                    ], style={'float': 'right', 'width': '45%'}),
+                    ], style={'float': 'right', 'width': '48%', 'marginTop': 50, 'marginBottom': 0}),
 
                     html.Div([
                         dcc.Graph(id='o-sankey'),
-                    ], style={'float': 'left', 'width': '45%'}),
+                    ], style={'float': 'left', 'width': '48%', 'marginTop': 0}),
                     html.Div([
                         dcc.Graph(id='d-sankey'),
-                    ], style={'float': 'right', 'width': '45%'}),
+                    ], style={'float': 'right', 'width': '48%', 'marginTop': 0}),
 
                     # html.H6('Individual Stats'),
                     dcc.Dropdown(
@@ -346,6 +345,7 @@ def update_team_comparison(year, indicators, metric):
             x=dff[dff.team == t][metric],
             y=dff[dff.team == t]['indicator'],
             name=t,
+            text=t,
             mode='markers+lines',
             marker={
                 'size': 10,
@@ -398,7 +398,7 @@ def make_sankey(team, year, line):
     return {
         'data': [data_trace],
         'layout': go.Layout(
-            title=title,
+            # title=title,
             height=700, # width=600,
             # margin={'l': 120, 'b': 40, 't': 40, 'r': 0},
             hovermode='closest'
@@ -411,6 +411,9 @@ def make_conversion_plot(team, year, line):
     df1 = subset_years(df_p, year)
 
     df1 = df1[df1.team == team]
+
+    # Todo - add this to player indicators?
+    df1['Proportion Offensive'] = df1['Points Played (Offense)'] / df1['Points Played']
     # print(df1.shape)
     # print(df1.columns)
     # title = 'Goals'
@@ -419,25 +422,37 @@ def make_conversion_plot(team, year, line):
     # elif line == 'D':
     #     title = "Breaks"
 
-
     return {
         'data': [go.Scatter(
             x=df1[f'Points Played ({line})'],
             y=df1[f'conversion rate ({line})'],
             # name=p,
             mode='markers',
-            # marker={
-            #     'size': 10,
-            #     'opacity': 0.5,
-            #     # 'line': {'width': 0}
-            # },
+            marker=dict(
+                color=df1['Proportion Offensive'],
+                colorscale='RdBu',
+                reversescale=True,
+                showscale=True,
+                colorbar=dict(
+                    title='% Offensive',
+                ),
+            ),
+            text=df1['player'],
+            # 'size': 10,
+            # 'opacity': 0.5,
+            # 'line': {'width': 0}
             # line={'width': 0.4}
         )],
         'layout': go.Layout(
-            # title=team,
-            height=600,
+            title=line,
+            height=400,
             margin={'l': 120, 'b': 40, 't': 40, 'r': 40},
-            hovermode='closest'
+            hovermode='closest',
+            yaxis=dict(
+                range=[0, 1],
+                title=f'Conversion Rate',
+            ),
+            xaxis=dict(title=f'Points Played ({line})')
         )
     }
 
