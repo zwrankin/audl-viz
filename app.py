@@ -5,7 +5,7 @@ import dash_daq as daq
 from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.graph_objs as go
-from src.data.process_team_indicators import index_vars, team_indicators, player_indicators, team_eoy_indicators
+from src.data.process_team_indicators import index_vars, player_index_vars, team_indicators, team_eoy_indicators
 from src.data.utils import subset_years, apply_game_threshold, aggregate_rates, make_sankey_df
 from src.visualization.utils import palette_df, palette, map_colors
 
@@ -22,6 +22,7 @@ df_t['opponent_color1'] = df_t.opponent.transform(lambda x: map_colors(x, palett
 df_t['opponent_color2'] = df_t.opponent.transform(lambda x: map_colors(x, palette, 1))
 
 df_p = pd.read_csv('./data/processed/player_indicators.csv')
+player_indicators = [i for i in df_p.columns if i not in player_index_vars]
 player_team = df_p[['player', 'year', 'team']].drop_duplicates()
 
 df_eoy = pd.read_csv('./data/processed/team_indicators_EOY.csv')
@@ -97,14 +98,23 @@ html.H6('Season'),
                             value=['Break_pct', 'Hold_pct'],
                             style={'width': 600}
                         ),
+
+
                     dcc.Graph(id='team-timeseries'),
 
                     html.Div([
+                        dcc.Graph(id='o-conversion'),
+                    ], style={'float': 'left', 'width': '48%', 'marginTop': 50, 'marginBottom': 0}),
+                    html.Div([
+                        dcc.Graph(id='d-conversion'),
+                    ], style={'float': 'right', 'width': '48%', 'marginTop': 50, 'marginBottom': 0}),
+
+                    html.Div([
                         dcc.Graph(id='o-sankey'),
-                    ], style={'float': 'left', 'width': '45%'}),
+                    ], style={'float': 'left', 'width': '48%', 'marginTop': 0}),
                     html.Div([
                         dcc.Graph(id='d-sankey'),
-                    ], style={'float': 'right', 'width': '45%'}),
+                    ], style={'float': 'right', 'width': '48%', 'marginTop': 0}),
 
                     # html.H6('Individual Stats'),
                     dcc.Dropdown(
@@ -159,6 +169,21 @@ html.H6('Season'),
     dcc.Markdown(children=bottom_markdown_text),
 
 ])
+
+
+@app.callback(
+    Output('o-conversion', 'figure'),
+    [Input('team', 'value'),
+     Input('year', 'value')])
+def update_o_conversion(team, year):
+    return make_conversion_plot(team, year, line='Offense')
+
+@app.callback(
+    Output('d-conversion', 'figure'),
+    [Input('team', 'value'),
+     Input('year', 'value')])
+def update_d_conversion(team, year):
+    return make_conversion_plot(team, year, line='Defense')
 
 
 @app.callback(
@@ -220,7 +245,7 @@ def update_leaderboard(indicator, year, rate_type, min_games):
             hovermode='closest'
         )
     }
-    
+
 
 @app.callback(
     Output('team-players', 'figure'),
@@ -320,6 +345,7 @@ def update_team_comparison(year, indicators, metric):
             x=dff[dff.team == t][metric],
             y=dff[dff.team == t]['indicator'],
             name=t,
+            text=t,
             mode='markers+lines',
             marker={
                 'size': 10,
@@ -372,10 +398,61 @@ def make_sankey(team, year, line):
     return {
         'data': [data_trace],
         'layout': go.Layout(
-            title=title,
+            # title=title,
             height=700, # width=600,
             # margin={'l': 120, 'b': 40, 't': 40, 'r': 0},
             hovermode='closest'
+        )
+    }
+
+
+def make_conversion_plot(team, year, line):
+    """TODO - refactor so easier to move to viz utils, for now it has too many dependencies"""
+    df1 = subset_years(df_p, year)
+
+    df1 = df1[df1.team == team]
+
+    # Todo - add this to player indicators?
+    df1['Proportion Offensive'] = df1['Points Played (Offense)'] / df1['Points Played']
+    # print(df1.shape)
+    # print(df1.columns)
+    # title = 'Goals'
+    # if line == 'O':
+    #     title = "Holds"
+    # elif line == 'D':
+    #     title = "Breaks"
+
+    return {
+        'data': [go.Scatter(
+            x=df1[f'Points Played ({line})'],
+            y=df1[f'conversion rate ({line})'],
+            # name=p,
+            mode='markers',
+            marker=dict(
+                color=df1['Proportion Offensive'],
+                colorscale='RdBu',
+                reversescale=True,
+                showscale=True,
+                colorbar=dict(
+                    title='% Offensive',
+                ),
+            ),
+            text=df1['player'],
+            # 'size': 10,
+            # 'opacity': 0.5,
+            # 'line': {'width': 0}
+            # line={'width': 0.4}
+        )],
+        'layout': go.Layout(
+            title=line,
+            height=400,
+            margin={'l': 120, 'b': 40, 't': 40, 'r': 40},
+            hovermode='closest',
+            yaxis=dict(
+                range=[0, 1],
+                title=f'Conversion Rate',
+            ),
+            xaxis=dict(title=f'Points Played ({line})')
         )
     }
 
