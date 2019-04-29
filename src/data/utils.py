@@ -49,13 +49,23 @@ def aggregate_rates(df, indicators, rate_type='count'):
     return df
 
 
-def make_sankey_df(df, team='Chicago Wildfire', year=2018, line='O'):
+def list_top_occurences(values, n):
+    return values.value_counts()[:n].index.tolist()
+
+
+def make_sankey_df(df, team='Chicago Wildfire', year=2018, line='O', n_players=14):
     """df must have Passer, Receiver, Line"""
     df = subset_years(df, year)
     df = df.loc[df.team == team]
     if line != 'both':
         df = df.loc[df.Line == line]
     df = df[['Passer', 'Receiver']]
+
+    top_assists = list_top_occurences(df.Passer, n_players)
+    df['Passer'] = df.Passer.transform(lambda x: x if x in top_assists else "Other")
+    top_goals = list_top_occurences(df.Receiver, n_players)
+    df['Receiver'] = df.Receiver.transform(lambda x: x if x in top_goals else "Other")
+
     # There's a bug where plotly sankeys can't handle circularity, so add suffixes to make entities different
     # https://community.plot.ly/t/sankey-diagram-handling-circularity-error/15102/3
     df['Receiver'] = df.Receiver + ' '
