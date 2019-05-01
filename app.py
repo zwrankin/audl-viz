@@ -5,7 +5,7 @@ import dash_daq as daq
 from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.graph_objs as go
-from src.data.process_team_indicators import index_vars, player_index_vars, team_indicators, team_eoy_indicators
+# from src.data.process_team_indicators import index_vars, team_eoy_indicators, player_index_vars, team_indicators
 from src.data.utils import subset_years, apply_game_threshold, aggregate_rates, make_sankey_df
 from src.visualization.utils import palette_df, palette, map_colors
 
@@ -15,17 +15,24 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 server = app.server
 
-df_t = pd.read_csv('./data/processed/team_indicators.csv')
-df_t = df_t.melt(id_vars=index_vars, value_vars=team_indicators, var_name='indicator')
+# TODO - how to best get from AUDL-pull
+team_index_vars = ['year', 'team', 'opponent', 'date', 'game']
+player_index_vars = ['year', 'team', 'player']
+
+df_t = pd.read_csv('./data/processed/team_stats.csv')
+team_indicators = [i for i in df_t.columns if i not in team_index_vars]
+team_eoy_indicators = team_indicators
+df_t = df_t.melt(id_vars=team_index_vars, value_vars=team_indicators, var_name='indicator')
 df_t = pd.merge(df_t, palette_df, how='outer').sort_values('team')
 df_t['opponent_color1'] = df_t.opponent.transform(lambda x: map_colors(x, palette, 0))
 df_t['opponent_color2'] = df_t.opponent.transform(lambda x: map_colors(x, palette, 1))
 
-df_p = pd.read_csv('./data/processed/player_indicators.csv')
+# df_p = pd.read_csv('./data/processed/player_indicators.csv')
+df_p = pd.read_csv('./data/processed/player_stats.csv')
 player_indicators = [i for i in df_p.columns if i not in player_index_vars]
 player_team = df_p[['player', 'year', 'team']].drop_duplicates()
 
-df_eoy = pd.read_csv('./data/processed/team_indicators_EOY.csv')
+df_eoy = pd.read_csv('./data/processed/team_stats_by_year.csv')
 
 df_goals = pd.read_csv('./data/processed/all_goals.csv')
 
@@ -45,7 +52,7 @@ app.layout = html.Div([
             style=dict(height='35%', width='35%'))],
         href='https://www.theaudl.com'),
 
-html.H6('Season'),
+    html.H6('Season'),
     dcc.RadioItems(
         id='year',
         options=[{'label': i, 'value': i} for i in [2014, 2015, 2016, 2017, 2018, 'All years']],
@@ -56,7 +63,6 @@ html.H6('Season'),
     dcc.Tabs(id="tabs", style={
         'textAlign': 'center', 'margin': '48px 0', 'fontFamily': 'system-ui'}, children=[
 
-        
         dcc.Tab(label='Individual Leaderboard', children=[
             html.Div([
                 dcc.Dropdown(
@@ -80,92 +86,93 @@ html.H6('Season'),
 
             ]),
         ]),
-                        
+
         dcc.Tab(label='Team Explorer', children=[
             html.Div([
-                    dcc.Dropdown(
-                            id='team',
-                            options=[{'label': i, 'value': i} for i in df_t.team.sort_values().unique()],
-                            value='Atlanta Hustle',
-                            style={'fontSize': 24, 'width': 600, 'verticalAlign': 'middle'},
-                            ),
-                            
-                    # html.H6('Team Stats'),
-                    dcc.Dropdown(
-                            id='team-indicators',
-                            options=[{'label': i, 'value': i} for i in team_indicators],
-                            multi=True,
-                            value=['Break_pct', 'Hold_pct'],
-                            style={'width': 600}
-                        ),
+                dcc.Dropdown(
+                    id='team',
+                    options=[{'label': i, 'value': i} for i in df_t.team.sort_values().unique()],
+                    value='Atlanta Hustle',
+                    style={'fontSize': 24, 'width': 600, 'verticalAlign': 'middle'},
+                ),
 
+                # html.H6('Team Stats'),
+                dcc.Dropdown(
+                    id='team-indicators',
+                    options=[{'label': i, 'value': i} for i in team_indicators],
+                    multi=True,
+                    value=['Hold Rate', 'Break Rate', 'O-line Scoring Efficiency', 'D-line Scoring Efficiency'],
+                    style={'width': 600}
+                ),
 
-                    dcc.Graph(id='team-timeseries'),
+                dcc.Graph(id='team-timeseries'),
 
-                    html.Div([
-                        dcc.Graph(id='o-conversion'),
-                    ], style={'float': 'left', 'width': '48%', 'marginTop': 50, 'marginBottom': 0}),
-                    html.Div([
-                        dcc.Graph(id='d-conversion'),
-                    ], style={'float': 'right', 'width': '48%', 'marginTop': 50, 'marginBottom': 0}),
+                html.Div([
+                    dcc.Graph(id='o-conversion'),
+                    # TODO - can control number of players to display, if you pass this to the o-sankey callback
+                    # daq.NumericInput(
+                    #     id='o-sankey-n-players',
+                    #     label='Number players to display',
+                    #     value=14,
+                    #     max=30,
+                    # ),
+                    dcc.Graph(id='o-sankey'),
+                ], style={'width': '48%', 'float': 'left'}),
 
-                    html.Div([
-                        dcc.Graph(id='o-sankey'),
-                    ], style={'float': 'left', 'width': '48%', 'marginTop': 0}),
-                    html.Div([
-                        dcc.Graph(id='d-sankey'),
-                    ], style={'float': 'right', 'width': '48%', 'marginTop': 0}),
+                html.Div([
+                    dcc.Graph(id='d-conversion'),
+                    dcc.Graph(id='d-sankey'),
+                ], style={'width': '48%', 'float': 'right'}),
 
-                    # html.H6('Individual Stats'),
-                    dcc.Dropdown(
-                            id='player-indicators',
-                            options=[{'label': i, 'value': i} for i in player_indicators],
-                            multi=True,
-                            value=['Plus_Minus', 'Goals', 'Assists', 'Ds', 'Turnovers'],
-                            style={'width': 600}
-                        ),
-                    dcc.RadioItems(
-                        id='rate-type',
-                        options=[{'label': i, 'value': i} for i in ['count', 'per point', 'per game']],
-                        value='count',
-                        labelStyle={'display': 'inline-block'},
-                    ),
-                    daq.NumericInput(
-                        id='min-games',
-                        label='Minimum Games Played',
-                        value=4,
-                    ),
-                    dcc.Graph(id='team-players'),
+                # html.H6('Individual Stats'),
+                dcc.Dropdown(
+                    id='player-indicators',
+                    options=[{'label': i, 'value': i} for i in player_indicators],
+                    multi=True,
+                    value=['Plus_Minus', 'Goals', 'Assists', 'Hockey Assists', 'Blocks', 'Turnovers'],
+                    style={'width': 600}
+                ),
+                dcc.RadioItems(
+                    id='rate-type',
+                    options=[{'label': i, 'value': i} for i in ['count', 'per point', 'per game']],
+                    value='count',
+                    labelStyle={'display': 'inline-block'},
+                ),
+                daq.NumericInput(
+                    id='min-games',
+                    label='Minimum Games Played',
+                    value=4,
+                ),
+                dcc.Graph(id='team-players'),
 
             ]),
         ]),
 
-
         dcc.Tab(label='League Explorer', children=[
             html.Div([
-                    html.H5('Team Stats'),
-                    dcc.Dropdown(
-                            id='team-eoy-indicators',
-                            options=[{'label': i, 'value': i} for i in team_eoy_indicators],
-                            multi=True,
-                            value=['Win_pct', 'Hold_pct', 'Break_pct'],
-                            style={'width': 600}
-                    ),
-                    html.H6('Metric'),
-                    dcc.RadioItems(
-                            id='metric',
-                            options=[{'label': i, 'value': i} for i in ['rank', 'value']],
-                            value='rank',
-                            labelStyle={'display': 'inline-block'},
-                            ),
-                    dcc.Markdown('*Note: For all ranks, highest value is ranked #1*'),
-                    dcc.Graph(id='team-comparison')
+                html.H5('Team Stats'),
+                dcc.Dropdown(
+                    id='team-eoy-indicators',
+                    options=[{'label': i, 'value': i} for i in team_eoy_indicators],
+                    multi=True,
+                    value=['Hold Rate', 'O-line Scoring Efficiency', 'D-line Scoring Efficiency', 'Break Rate'],
+                    style={'width': 600}
+                ),
+                html.H6('Metric'),
+                dcc.RadioItems(
+                    id='metric',
+                    options=[{'label': i, 'value': i} for i in ['rank', 'value']],
+                    value='rank',
+                    labelStyle={'display': 'inline-block'},
+                ),
+                dcc.Markdown('*Note: For all ranks, highest value is ranked #1*'),
+                dcc.Graph(id='team-comparison')
 
             ]),
         ]),
 
     ]),
-                        
+
     dcc.Markdown(children=bottom_markdown_text),
 
 ])
@@ -176,22 +183,24 @@ html.H6('Season'),
     [Input('team', 'value'),
      Input('year', 'value')])
 def update_o_conversion(team, year):
-    return make_conversion_plot(team, year, line='Offense')
+    return make_conversion_plot(team, year, line='O')
+
 
 @app.callback(
     Output('d-conversion', 'figure'),
     [Input('team', 'value'),
      Input('year', 'value')])
 def update_d_conversion(team, year):
-    return make_conversion_plot(team, year, line='Defense')
+    return make_conversion_plot(team, year, line='D')
 
 
 @app.callback(
-        Output('o-sankey', 'figure'),
-        [Input('team', 'value'),
-         Input('year', 'value')])
+    Output('o-sankey', 'figure'),
+    [Input('team', 'value'),
+     Input('year', 'value')])
 def update_o_sankey(team, year):
     return make_sankey(team, year, line='O')
+
 
 @app.callback(
     Output('d-sankey', 'figure'),
@@ -199,6 +208,7 @@ def update_o_sankey(team, year):
      Input('year', 'value')])
 def update_d_sankey(team, year):
     return make_sankey(team, year, line='D')
+
 
 @app.callback(
     Output('leaderboard', 'figure'),
@@ -262,7 +272,7 @@ def update_players(team, year, indicators, min_games, rate_type):
     dff = df1.groupby('player')[player_indicators].sum().reset_index()
     dff = aggregate_rates(dff, player_indicators, rate_type)
     dff = dff.melt(id_vars='player', value_vars=indicators, var_name='indicator')
-    
+
     dff['indicator'] = pd.Categorical(dff.indicator, indicators)
     dff = dff.sort_values(['indicator', 'player'], ascending=[False, True])
 
@@ -286,7 +296,8 @@ def update_players(team, year, indicators, min_games, rate_type):
             hovermode='closest'
         )
     }
-    
+
+
 @app.callback(
     Output('team-timeseries', 'figure'),
     [Input('team', 'value'),
@@ -334,7 +345,7 @@ def update_team_comparison(year, indicators, metric):
     df1 = subset_years(df_eoy, year)
 
     dff = df1.melt(id_vars='team', value_vars=indicators, var_name='indicator')
-    
+
     dff['indicator'] = pd.Categorical(dff.indicator, indicators)
     dff = pd.merge(dff, palette_df, how='outer')
     dff = dff.sort_values(['indicator', 'team'], ascending=[False, True])
@@ -353,7 +364,7 @@ def update_team_comparison(year, indicators, metric):
                 'line': {'width': 2,
                          'color': dff[dff.team == t]['color2']}
             },
-            line={'width': 0.4, 'color':  map_colors(t, palette, 1)}
+            line={'width': 0.4, 'color': map_colors(t, palette, 1)}
         ) for t in dff.team.unique()],
         'layout': go.Layout(
             # title=team,
@@ -370,7 +381,7 @@ def make_sankey(team, year, line):
     data = make_sankey_df(df_goals, team, year, line)
     # Plotly sankey needs numeric ids, not names
     players = set(data.Passer.tolist() + data.Receiver.tolist())
-    player_dict = {j:i for i,j in enumerate(players)}
+    player_dict = {j: i for i, j in enumerate(players)}
     data['Source'] = data.Passer.map(player_dict)
     data['Target'] = data.Receiver.map(player_dict)
     title = 'Goals'
@@ -380,26 +391,26 @@ def make_sankey(team, year, line):
         title = "Breaks"
     data_trace = dict(
         type='sankey',
-        node = dict(
+        node=dict(
             # pad = 15,
             # thickness = 15,
             # line = dict(
             #     color = "black",
             #     width = 0.5
             # ),
-            label = list(player_dict.keys()),
+            label=list(player_dict.keys()),
         ),
-        link = dict(
-            source =  data['Source'],
-            target =  data['Target'],
-            value =  data['Value'],
+        link=dict(
+            source=data['Source'],
+            target=data['Target'],
+            value=data['Value'],
         ))
 
     return {
         'data': [data_trace],
         'layout': go.Layout(
             # title=title,
-            height=700, # width=600,
+            height=700,  # width=600,
             # margin={'l': 120, 'b': 40, 't': 40, 'r': 0},
             hovermode='closest'
         )
@@ -413,19 +424,18 @@ def make_conversion_plot(team, year, line):
     df1 = df1[df1.team == team]
 
     # Todo - add this to player indicators?
-    df1['Proportion Offensive'] = df1['Points Played (Offense)'] / df1['Points Played']
-    # print(df1.shape)
-    # print(df1.columns)
-    # title = 'Goals'
-    # if line == 'O':
-    #     title = "Holds"
-    # elif line == 'D':
-    #     title = "Breaks"
+    df1['Proportion Offensive'] = df1[f'O Points Played'] / df1['Points Played']
+
+    title = ""
+    if line == 'O':
+        title = "Offense"
+    elif line == 'D':
+        title = "Defense"
 
     return {
         'data': [go.Scatter(
-            x=df1[f'Points Played ({line})'],
-            y=df1[f'conversion rate ({line})'],
+            x=df1[f'{line} Points Played'],
+            y=df1[f'{line}-line Scoring Efficiency'],
             # name=p,
             mode='markers',
             marker=dict(
@@ -444,18 +454,18 @@ def make_conversion_plot(team, year, line):
             # line={'width': 0.4}
         )],
         'layout': go.Layout(
-            title=line,
+            title=title,
             height=400,
             margin={'l': 120, 'b': 40, 't': 40, 'r': 40},
             hovermode='closest',
             yaxis=dict(
                 range=[0, 1],
-                title=f'Conversion Rate',
+                title=f'{line}-line Scoring Efficiency',
             ),
             xaxis=dict(title=f'Points Played ({line})')
         )
     }
 
-    
+
 if __name__ == '__main__':
     app.run_server(debug=True)
