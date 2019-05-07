@@ -16,7 +16,6 @@ Data is collected during each AUDL game using the UltiAnalytics app that then sa
 [UltiAnalytics](https://www.ultianalytics.com/index.html).  
 Dan Fiorino wrote [audl-pull](https://github.com/dfiorino/audl-pull), 
 a Python repo providing invaluable data cleaning and standardization.  
-Within this repo, there is a [script](https://github.com/zwrankin/audl-viz/blob/master/src/data/process_team_indicators.py) 
-that aggregates [audl-pull output](https://github.com/dfiorino/audl-pull/tree/master/output) 
-into several csvs used in the visualization app. I wrote a 
-[Notebook](https://github.com/zwrankin/audl-viz/blob/master/notebooks/2019_03_03_data_overview.ipynb) that explains these csvs. 
+As of May 2019, I am working with him to refactor all stat definitions and calculations within his repo,  
+so that the audl-viz repo only handles data visualization. 
+
