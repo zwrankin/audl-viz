@@ -5,7 +5,6 @@ import dash_daq as daq
 from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.graph_objs as go
-# from src.data.process_team_indicators import index_vars, team_eoy_indicators, player_index_vars, team_indicators
 from src.data.utils import subset_years, apply_game_threshold, aggregate_rates, make_sankey_df
 from src.visualization.utils import palette_df, palette, map_colors
 
@@ -27,7 +26,6 @@ df_t = pd.merge(df_t, palette_df, how='outer').sort_values('team')
 df_t['opponent_color1'] = df_t.opponent.transform(lambda x: map_colors(x, palette, 0))
 df_t['opponent_color2'] = df_t.opponent.transform(lambda x: map_colors(x, palette, 1))
 
-# df_p = pd.read_csv('./data/processed/player_indicators.csv')
 df_p = pd.read_csv('./data/processed/player_stats.csv')
 player_indicators = [i for i in df_p.columns if i not in player_index_vars]
 player_team = df_p[['player', 'year', 'team']].drop_duplicates()
@@ -129,7 +127,7 @@ app.layout = html.Div([
                     id='player-indicators',
                     options=[{'label': i, 'value': i} for i in player_indicators],
                     multi=True,
-                    value=['Plus_Minus', 'Goals', 'Assists', 'Hockey Assists', 'Blocks', 'Turnovers'],
+                    value=['Plus/Minus', 'Goals', 'Assists', 'Hockey Assists', 'Blocks', 'Turnovers'],
                     style={'width': 600}
                 ),
                 dcc.RadioItems(
