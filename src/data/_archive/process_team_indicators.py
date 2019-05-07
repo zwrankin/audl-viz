@@ -1,6 +1,6 @@
 import pandas as pd
-from .utils import DATA_DIR, load_raw_data
-from .player_stats import PlayStatsByPlayer, calculate_conversion_rates
+from src.data.utils import DATA_DIR, load_raw_data
+from src.data._archive.player_stats import PlayStatsByPlayer, calculate_conversion_rates
 
 index_vars = ['year', 'team', 'opponent', 'date', 'game']
 # NOTE - the current player functions get prohibitively slow if indexed on game
