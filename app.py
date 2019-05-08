@@ -63,30 +63,6 @@ app.layout = html.Div([
     dcc.Tabs(id="tabs", style={
         'textAlign': 'center', 'margin': '48px 0', 'fontFamily': 'system-ui'}, children=[
 
-        dcc.Tab(label='Individual Leaderboard', children=[
-            html.Div([
-                dcc.Dropdown(
-                    id='player-indicator',
-                    options=[{'label': i, 'value': i} for i in player_indicators],
-                    value='Plus/Minus',
-                    style={'width': 600}
-                ),
-                dcc.RadioItems(
-                    id='rate-type1',
-                    options=[{'label': i, 'value': i} for i in ['count', 'per point', 'per game']],
-                    value='count',
-                    labelStyle={'display': 'inline-block'},
-                ),
-                daq.NumericInput(
-                    id='min-games1',
-                    label='Minimum Games Played',
-                    value=4,
-                ),
-                dcc.Graph(id='leaderboard'),
-
-            ]),
-        ]),
-
         dcc.Tab(label='Team Explorer', children=[
             html.Div([
                 dcc.Dropdown(
@@ -112,7 +88,7 @@ app.layout = html.Div([
                 daq.NumericInput(
                     id='min-games',
                     label='Minimum Games Played',
-                    value=4,
+                    value=5,
                 ),
                 dcc.Graph(id='team-players'),
 
@@ -182,6 +158,30 @@ app.layout = html.Div([
                     style={'width': 600}
                 ),
                 dcc.Graph(id='matchup-heatmap'),
+
+            ]),
+        ]),
+
+        dcc.Tab(label='Individual Leaderboard', children=[
+            html.Div([
+                dcc.Dropdown(
+                    id='player-indicator',
+                    options=[{'label': i, 'value': i} for i in player_indicators],
+                    value='Plus/Minus',
+                    style={'width': 600}
+                ),
+                dcc.RadioItems(
+                    id='rate-type1',
+                    options=[{'label': i, 'value': i} for i in ['count', 'per point', 'per game']],
+                    value='count',
+                    labelStyle={'display': 'inline-block'},
+                ),
+                daq.NumericInput(
+                    id='min-games1',
+                    label='Minimum Games Played',
+                    value=5,
+                ),
+                dcc.Graph(id='leaderboard'),
 
             ]),
         ]),
