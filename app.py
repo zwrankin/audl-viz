@@ -312,8 +312,9 @@ def update_leaderboard(indicator, year, rate_type, min_games):
      Input('player-indicators', 'value'),
      Input('min-games', 'value'),
      Input('rate-type', 'value'),
-     Input('team-players', 'hoverData')])
-def update_players(team, year, indicators, min_games, rate_type, hover_data):
+     Input('team-players', 'hoverData'),
+     Input('team-players', 'clickData')])
+def update_players(team, year, indicators, min_games, rate_type, hover_data, click_data):
     df1 = subset_years(df_p, year)
 
     df1 = df1[df1.team == team]
@@ -329,6 +330,8 @@ def update_players(team, year, indicators, min_games, rate_type, hover_data):
 
     if hover_data:
         i = hover_data['points'][0]['curveNumber']
+    elif click_data:
+        i = click_data['points'][0]['curveNumber']
     else:
         i = 0
     opacities = [0.5] * len(players)
@@ -403,8 +406,9 @@ def update_team_timeseries(team, year, indicators):
     [Input('year', 'value'),
      Input('team-eoy-indicators', 'value'),
      Input('metric', 'value'),
-     Input('team-comparison', 'hoverData')])
-def update_team_comparison(year, indicators, metric, hover_data):
+     Input('team-comparison', 'hoverData'),
+     Input('team-comparison', 'clickData')])
+def update_team_comparison(year, indicators, metric, hover_data, click_data):
     df1 = subset_years(df_eoy, year)
 
     dff = df1.melt(id_vars='team', value_vars=indicators, var_name='indicator')
@@ -416,6 +420,8 @@ def update_team_comparison(year, indicators, metric, hover_data):
 
     if hover_data:
         i = hover_data['points'][0]['curveNumber']
+    elif click_data:
+        i = click_data['points'][0]['curveNumber']
     else:
         i = 0
     marker_sizes = [10] * len(dff.team.unique())
