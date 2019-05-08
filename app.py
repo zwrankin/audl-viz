@@ -96,35 +96,6 @@ app.layout = html.Div([
                     style={'fontSize': 20, 'width': 600, 'verticalAlign': 'middle'},
                 ),
 
-                # html.H6('Team Stats'),
-                dcc.Dropdown(
-                    id='team-indicators',
-                    options=[{'label': i, 'value': i} for i in team_indicators],
-                    multi=True,
-                    value=['Hold Rate', 'Break Rate'],
-                    style={'width': 600}
-                ),
-
-                dcc.Graph(id='team-timeseries'),
-
-                html.Div([
-                    dcc.Graph(id='o-conversion'),
-                    # TODO - can control number of players to display, if you pass this to the o-sankey callback
-                    # daq.NumericInput(
-                    #     id='o-sankey-n-players',
-                    #     label='Number players to display',
-                    #     value=14,
-                    #     max=30,
-                    # ),
-                    dcc.Graph(id='o-sankey'),
-                ], style={'width': '48%', 'float': 'left'}),
-
-                html.Div([
-                    dcc.Graph(id='d-conversion'),
-                    dcc.Graph(id='d-sankey'),
-                ], style={'width': '48%', 'float': 'right'}),
-
-                # html.H6('Individual Stats'),
                 dcc.Dropdown(
                     id='player-indicators',
                     options=[{'label': i, 'value': i} for i in player_indicators],
@@ -144,6 +115,35 @@ app.layout = html.Div([
                     value=4,
                 ),
                 dcc.Graph(id='team-players'),
+
+                html.Div([
+                    dcc.Graph(id='o-sankey'),
+                    dcc.Graph(id='o-conversion'),
+                    # TODO - can control number of players to display, if you pass this to the o-sankey callback
+                    # daq.NumericInput(
+                    #     id='o-sankey-n-players',
+                    #     label='Number players to display',
+                    #     value=14,
+                    #     max=30,
+                    # ),
+                ], style={'width': '48%', 'float': 'left'}),
+
+                html.Div([
+                    dcc.Graph(id='d-sankey'),
+                    dcc.Graph(id='d-conversion'),
+                ], style={'width': '48%', 'float': 'right'}),
+
+                html.H6('Season Timeline'),
+                dcc.Dropdown(
+                    id='team-indicators',
+                    options=[{'label': i, 'value': i} for i in team_indicators],
+                    multi=True,
+                    value=['Hold Rate', 'Break Rate'],
+                    style={'width': 600}
+                ),
+
+                dcc.Graph(id='team-timeseries'),
+
 
             ]),
         ]),
@@ -353,7 +353,7 @@ def update_players(team, year, indicators, min_games, rate_type, hover_data):
         ) for i, p in enumerate(players)],
         'layout': go.Layout(
             # title=team,
-            height=600,
+            height=80 + 80*len(indicators),
             margin={'l': 120, 'b': 40, 't': 40, 'r': 40},
             hovermode='closest'
         )
@@ -481,7 +481,7 @@ def make_sankey(team, year, line):
     return {
         'data': [data_trace],
         'layout': go.Layout(
-            # title=title,
+            title=title,
             height=700,  # width=600,
             # margin={'l': 120, 'b': 40, 't': 40, 'r': 0},
             hovermode='closest'
@@ -526,7 +526,7 @@ def make_conversion_plot(team, year, line):
             # line={'width': 0.4}
         )],
         'layout': go.Layout(
-            title=title,
+            # title=title,
             height=400,
             margin={'l': 120, 'b': 40, 't': 40, 'r': 40},
             hovermode='closest',
