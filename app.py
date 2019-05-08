@@ -68,7 +68,7 @@ app.layout = html.Div([
                 dcc.Dropdown(
                     id='player-indicator',
                     options=[{'label': i, 'value': i} for i in player_indicators],
-                    value='Goals',
+                    value='Plus/Minus',
                     style={'width': 600}
                 ),
                 dcc.RadioItems(
@@ -93,7 +93,7 @@ app.layout = html.Div([
                     id='team',
                     options=[{'label': i, 'value': i} for i in df_t.team.sort_values().unique()],
                     value='Atlanta Hustle',
-                    style={'fontSize': 24, 'width': 600, 'verticalAlign': 'middle'},
+                    style={'fontSize': 20, 'width': 600, 'verticalAlign': 'middle'},
                 ),
 
                 # html.H6('Team Stats'),
@@ -101,7 +101,7 @@ app.layout = html.Div([
                     id='team-indicators',
                     options=[{'label': i, 'value': i} for i in team_indicators],
                     multi=True,
-                    value=['Hold Rate', 'Break Rate', 'O-line Scoring Efficiency', 'D-line Scoring Efficiency'],
+                    value=['Hold Rate', 'Break Rate'],
                     style={'width': 600}
                 ),
 
@@ -155,7 +155,7 @@ app.layout = html.Div([
                     id='team-eoy-indicators',
                     options=[{'label': i, 'value': i} for i in team_eoy_indicators],
                     multi=True,
-                    value=['Hold Rate', 'O-line Scoring Efficiency', 'D-line Scoring Efficiency', 'Break Rate'],
+                    value=['Hold Rate', 'Break Rate'],
                     style={'width': 600}
                 ),
                 html.H6('Metric'),
@@ -172,7 +172,7 @@ app.layout = html.Div([
                 dcc.RadioItems(
                     id='division',
                     options=[{'label': i, 'value': i} for i in division_dict.keys()],
-                    value='Midwest',
+                    value='East',
                     labelStyle={'display': 'inline-block'},
                 ),
                 dcc.Dropdown(
@@ -211,16 +211,15 @@ def update_matchup_heatmap(division, year, indicator):
     df1 = df1.sort_values(['team', 'opponent'], ascending=[False, True])  #
 
     return {
-        'data': [go.Heatmap(z=df1[indicator],
-                           x=df1.opponent,
-                           y=df1.team,
-                           text=[indicator] * len(df1),
-                           hoverinfo='z+text')],
+        'data': [go.Heatmap(z=round(df1[indicator], 2),
+                            x=df1.opponent,
+                            y=df1.team,
+                            reversescale=True,
+                            text=[indicator] * len(df1),
+                            hoverinfo='z+text')],
         'layout': go.Layout(
-            title=f'{indicator} by matchup',
-            # height=600,
+            title=f'Average {indicator} by matchup',
             margin={'l': 200, 'b': 40, 't': 40, 'r': 40},
-            # hovermode='closest',
             yaxis=dict(title='Team'),
             xaxis=dict(title='Opponent')
         )
@@ -417,9 +416,9 @@ def update_team_comparison(year, indicators, metric):
         ) for t in dff.team.unique()],
         'layout': go.Layout(
             # title=team,
-            xaxis=dict(title=metric, titlefont=dict(size=24)),
-            height=600,
-            margin={'l': 120, 'b': 40, 't': 40, 'r': 40},
+            xaxis=dict(title=metric, titlefont=dict(size=18)),
+            height=200 + 100*len(indicators),
+            margin={'l': 200, 'b': 40, 't': 40, 'r': 40},
             hovermode='closest'
         )
     }

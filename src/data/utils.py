@@ -6,14 +6,14 @@ from pathlib import Path
 DATA_DIR = str(Path(__file__).parent.parent.parent/'data')
 
 division_dict = {
-    'Midwest': ['Chicago Wildfire', 'Detroit Mechanix', 'Indianapolis AlleyCats', 'Minnesota Wind Chill',
-                'Pittsburgh Thunderbirds', 'Madison Radicals', 'Cincinnati Revolution'],
     'East': ['DC Breeze', 'Montreal Royal', 'New York Empire',
              'Philadelphia Phoenix', 'Rochester Dragons', 'Toronto Rush', 'Ottawa Outlaws'],
-    'West': ['Salt Lake Lions', 'Seattle Cascades', 'San Francisco FlameThrowers', 'San Jose Spiders',
-             'San Diego Growlers', 'Seattle Raptors', 'Vancouver Riptide', 'Los Angeles Aviators'],
+    'Midwest': ['Chicago Wildfire', 'Detroit Mechanix', 'Indianapolis AlleyCats', 'Minnesota Wind Chill',
+                'Pittsburgh Thunderbirds', 'Madison Radicals', 'Cincinnati Revolution'],
     'South': ['Atlanta Hustle', 'Charlotte Express', 'Jacksonville Cannons', 'Nashville NightWatch',
               'Austin Sol', 'Dallas Roughnecks', 'Tampa Bay Cannons'],
+    'West': ['Salt Lake Lions', 'Seattle Cascades', 'San Francisco FlameThrowers', 'San Jose Spiders',
+             'San Diego Growlers', 'Seattle Raptors', 'Vancouver Riptide', 'Los Angeles Aviators'],
 }
 
 
