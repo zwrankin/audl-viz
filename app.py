@@ -155,7 +155,7 @@ app.layout = html.Div([
                     id='team-eoy-indicators',
                     options=[{'label': i, 'value': i} for i in team_eoy_indicators],
                     multi=True,
-                    value=['Hold Rate', 'Break Rate'],
+                    value=['O-line Scoring Efficiency', 'Hold Rate', 'Break Rate', 'D-line Scoring Efficiency'],
                     style={'width': 600}
                 ),
                 html.H6('Metric'),
@@ -311,8 +311,9 @@ def update_leaderboard(indicator, year, rate_type, min_games):
      Input('year', 'value'),
      Input('player-indicators', 'value'),
      Input('min-games', 'value'),
-     Input('rate-type', 'value')])
-def update_players(team, year, indicators, min_games, rate_type):
+     Input('rate-type', 'value'),
+     Input('team-players', 'hoverData')])
+def update_players(team, year, indicators, min_games, rate_type, hover_data):
     df1 = subset_years(df_p, year)
 
     df1 = df1[df1.team == team]
@@ -324,6 +325,19 @@ def update_players(team, year, indicators, min_games, rate_type):
     dff['indicator'] = pd.Categorical(dff.indicator, indicators)
     dff = dff.sort_values(['indicator', 'player'], ascending=[False, True])
 
+    players = dff.player.unique()
+
+    if hover_data:
+        i = hover_data['points'][0]['curveNumber']
+    else:
+        i = 0
+    opacities = [0.5] * len(players)
+    marker_sizes = [10] * len(players)
+    line_widths = [0.4] * len(players)
+    opacities[i] = 1
+    marker_sizes[i] = 20
+    line_widths[i] = 2
+
     return {
         'data': [go.Scatter(
             x=dff[dff.player == p]['value'],
@@ -331,12 +345,12 @@ def update_players(team, year, indicators, min_games, rate_type):
             name=p,
             mode='markers+lines',
             marker={
-                'size': 10,
-                'opacity': 0.5,
+                'size': marker_sizes[i],
+                'opacity': opacities[i],
                 # 'line': {'width': 0}
             },
-            line={'width': 0.4}
-        ) for p in dff.player.unique()],
+            line={'width': line_widths[i]}
+        ) for i, p in enumerate(players)],
         'layout': go.Layout(
             # title=team,
             height=600,
@@ -388,8 +402,9 @@ def update_team_timeseries(team, year, indicators):
     Output('team-comparison', 'figure'),
     [Input('year', 'value'),
      Input('team-eoy-indicators', 'value'),
-     Input('metric', 'value')])
-def update_team_comparison(year, indicators, metric):
+     Input('metric', 'value'),
+     Input('team-comparison', 'hoverData')])
+def update_team_comparison(year, indicators, metric, hover_data):
     df1 = subset_years(df_eoy, year)
 
     dff = df1.melt(id_vars='team', value_vars=indicators, var_name='indicator')
@@ -399,6 +414,15 @@ def update_team_comparison(year, indicators, metric):
     dff = dff.sort_values(['indicator', 'team'], ascending=[False, True])
     dff["rank"] = dff.groupby("indicator")["value"].rank("min", ascending=False)
 
+    if hover_data:
+        i = hover_data['points'][0]['curveNumber']
+    else:
+        i = 0
+    marker_sizes = [10] * len(dff.team.unique())
+    line_widths = [0.4] * len(dff.team.unique())
+    marker_sizes[i] = 20
+    line_widths[i] = 2
+
     return {
         'data': [go.Scatter(
             x=dff[dff.team == t][metric],
@@ -407,13 +431,13 @@ def update_team_comparison(year, indicators, metric):
             text=t,
             mode='markers+lines',
             marker={
-                'size': 10,
+                'size': marker_sizes[i],  # 10
                 'color': dff[dff.team == t]['color1'],
                 'line': {'width': 2,
                          'color': dff[dff.team == t]['color2']}
             },
-            line={'width': 0.4, 'color': map_colors(t, palette, 1)}
-        ) for t in dff.team.unique()],
+            line={'width': line_widths[i], 'color': map_colors(t, palette, 1)}
+        ) for i, t in enumerate(dff.team.unique())],
         'layout': go.Layout(
             # title=team,
             xaxis=dict(title=metric, titlefont=dict(size=18)),
