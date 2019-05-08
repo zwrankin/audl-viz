@@ -5,6 +5,7 @@ import dash_daq as daq
 from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.graph_objs as go
+from src.data.utils import division_dict
 from src.data.utils import subset_years, apply_game_threshold, aggregate_rates, make_sankey_df
 from src.visualization.utils import palette_df, palette, map_colors
 
@@ -19,6 +20,7 @@ team_index_vars = ['year', 'team', 'opponent', 'date', 'game']
 player_index_vars = ['year', 'team', 'player']
 
 df_t = pd.read_csv('./data/processed/team_stats.csv')
+df_t_wide = df_t.copy()  # TODO - need to address why df_t and df_p are not both wide or long
 team_indicators = [i for i in df_t.columns if i not in team_index_vars]
 team_eoy_indicators = team_indicators
 df_t = df_t.melt(id_vars=team_index_vars, value_vars=team_indicators, var_name='indicator')
@@ -66,7 +68,7 @@ app.layout = html.Div([
                 dcc.Dropdown(
                     id='player-indicator',
                     options=[{'label': i, 'value': i} for i in player_indicators],
-                    value='Goals',
+                    value='Plus/Minus',
                     style={'width': 600}
                 ),
                 dcc.RadioItems(
@@ -91,7 +93,7 @@ app.layout = html.Div([
                     id='team',
                     options=[{'label': i, 'value': i} for i in df_t.team.sort_values().unique()],
                     value='Atlanta Hustle',
-                    style={'fontSize': 24, 'width': 600, 'verticalAlign': 'middle'},
+                    style={'fontSize': 20, 'width': 600, 'verticalAlign': 'middle'},
                 ),
 
                 # html.H6('Team Stats'),
@@ -99,7 +101,7 @@ app.layout = html.Div([
                     id='team-indicators',
                     options=[{'label': i, 'value': i} for i in team_indicators],
                     multi=True,
-                    value=['Hold Rate', 'Break Rate', 'O-line Scoring Efficiency', 'D-line Scoring Efficiency'],
+                    value=['Hold Rate', 'Break Rate'],
                     style={'width': 600}
                 ),
 
@@ -153,7 +155,7 @@ app.layout = html.Div([
                     id='team-eoy-indicators',
                     options=[{'label': i, 'value': i} for i in team_eoy_indicators],
                     multi=True,
-                    value=['Hold Rate', 'O-line Scoring Efficiency', 'D-line Scoring Efficiency', 'Break Rate'],
+                    value=['Hold Rate', 'Break Rate'],
                     style={'width': 600}
                 ),
                 html.H6('Metric'),
@@ -164,7 +166,22 @@ app.layout = html.Div([
                     labelStyle={'display': 'inline-block'},
                 ),
                 dcc.Markdown('*Note: For all ranks, highest value is ranked #1*'),
-                dcc.Graph(id='team-comparison')
+                dcc.Graph(id='team-comparison'),
+
+                html.H6('Division'),
+                dcc.RadioItems(
+                    id='division',
+                    options=[{'label': i, 'value': i} for i in division_dict.keys()],
+                    value='East',
+                    labelStyle={'display': 'inline-block'},
+                ),
+                dcc.Dropdown(
+                    id='matchup-indicator',
+                    options=[{'label': i, 'value': i} for i in team_indicators],
+                    value='Hold Rate',
+                    style={'width': 600}
+                ),
+                dcc.Graph(id='matchup-heatmap'),
 
             ]),
         ]),
@@ -174,6 +191,39 @@ app.layout = html.Div([
     dcc.Markdown(children=bottom_markdown_text),
 
 ])
+
+
+@app.callback(
+    Output('matchup-heatmap', 'figure'),
+    [Input('division', 'value'),
+     Input('year', 'value'),
+     Input('matchup-indicator', 'value')
+     ])
+def update_matchup_heatmap(division, year, indicator):
+    df1 = subset_years(df_t_wide, year)
+
+    teams = division_dict[division]
+    opponents = division_dict[division]
+
+    df1 = df1.loc[(df1.team.isin(teams)) & (df1.opponent.isin(opponents))]
+    df1 = df1.groupby(['team', 'opponent'])[indicator].mean().reset_index()
+
+    df1 = df1.sort_values(['team', 'opponent'], ascending=[False, True])  #
+
+    return {
+        'data': [go.Heatmap(z=round(df1[indicator], 2),
+                            x=df1.opponent,
+                            y=df1.team,
+                            reversescale=True,
+                            text=[indicator] * len(df1),
+                            hoverinfo='z+text')],
+        'layout': go.Layout(
+            title=f'Average {indicator} by matchup',
+            margin={'l': 200, 'b': 40, 't': 40, 'r': 40},
+            yaxis=dict(title='Team'),
+            xaxis=dict(title='Opponent')
+        )
+    }
 
 
 @app.callback(
@@ -366,9 +416,9 @@ def update_team_comparison(year, indicators, metric):
         ) for t in dff.team.unique()],
         'layout': go.Layout(
             # title=team,
-            xaxis=dict(title=metric, titlefont=dict(size=24)),
-            height=600,
-            margin={'l': 120, 'b': 40, 't': 40, 'r': 40},
+            xaxis=dict(title=metric, titlefont=dict(size=18)),
+            height=200 + 100*len(indicators),
+            margin={'l': 200, 'b': 40, 't': 40, 'r': 40},
             hovermode='closest'
         )
     }
