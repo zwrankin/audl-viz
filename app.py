@@ -69,7 +69,7 @@ app.layout = html.Div([
                     id='team',
                     options=[{'label': i, 'value': i} for i in df_t.team.sort_values().unique()],
                     value='Atlanta Hustle',
-                    style={'fontSize': 20, 'width': 600, 'verticalAlign': 'middle'},
+                    style={'fontSize': 20, 'width': '70%', 'verticalAlign': 'middle'},
                 ),
 
                 dcc.Dropdown(
@@ -77,7 +77,7 @@ app.layout = html.Div([
                     options=[{'label': i, 'value': i} for i in player_indicators],
                     multi=True,
                     value=['Plus/Minus', 'Goals', 'Assists', 'Hockey Assists', 'Blocks', 'Turnovers'],
-                    style={'width': 600}
+                    style={'width': '70%'}
                 ),
                 dcc.RadioItems(
                     id='rate-type',
@@ -117,7 +117,7 @@ app.layout = html.Div([
                     options=[{'label': i, 'value': i} for i in team_indicators],
                     multi=True,
                     value=['Hold Rate', 'Break Rate'],
-                    style={'width': 600}
+                    style={'width': '70%'}
                 ),
 
                 dcc.Graph(id='team-timeseries'),
@@ -134,7 +134,7 @@ app.layout = html.Div([
                     options=[{'label': i, 'value': i} for i in team_eoy_indicators],
                     multi=True,
                     value=['O-line Scoring Efficiency', 'Hold Rate', 'Break Rate', 'D-line Scoring Efficiency'],
-                    style={'width': 600}
+                    style={'width': '70%'}
                 ),
                 html.H6('Metric'),
                 dcc.RadioItems(
@@ -157,7 +157,7 @@ app.layout = html.Div([
                     id='matchup-indicator',
                     options=[{'label': i, 'value': i} for i in team_indicators],
                     value='Hold Rate',
-                    style={'width': 600}
+                    style={'width': '50%'}
                 ),
                 dcc.Graph(id='matchup-heatmap'),
 
@@ -170,7 +170,7 @@ app.layout = html.Div([
                     id='player-indicator',
                     options=[{'label': i, 'value': i} for i in player_indicators],
                     value='Plus/Minus',
-                    style={'width': 600}
+                    style={'width': '50%'}
                 ),
                 dcc.RadioItems(
                     id='rate-type1',
