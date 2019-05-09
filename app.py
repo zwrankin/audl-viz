@@ -92,22 +92,24 @@ app.layout = html.Div([
                 ),
                 dcc.Graph(id='team-players'),
 
-                html.Div([
-                    dcc.Graph(id='o-sankey'),
-                    dcc.Graph(id='o-conversion'),
-                    # TODO - can control number of players to display, if you pass this to the o-sankey callback
-                    # daq.NumericInput(
-                    #     id='o-sankey-n-players',
-                    #     label='Number players to display',
-                    #     value=14,
-                    #     max=30,
-                    # ),
-                ], style={'width': '48%', 'float': 'left'}),
 
-                html.Div([
-                    dcc.Graph(id='d-sankey'),
-                    dcc.Graph(id='d-conversion'),
-                ], style={'width': '48%', 'float': 'right'}),
+                html.Div(className='row', children=[
+                    html.Div([
+                        # TODO - can control number of players to display, if you pass this to the o-sankey callback
+                        # daq.NumericInput(
+                        #     id='o-sankey-n-players',
+                        #     label='Number players to display',
+                        #     value=14,
+                        #     max=30,
+                        # ),
+                        dcc.Graph(id='o-sankey'),
+                        dcc.Graph(id='o-conversion'),
+                    ], className='six columns'),
+                    html.Div([
+                        dcc.Graph(id='d-sankey'),
+                        dcc.Graph(id='d-conversion'),
+                    ], className='six columns'),
+                ]),
 
                 html.H6('Season Timeline'),
                 dcc.Dropdown(
