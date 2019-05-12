@@ -37,4 +37,15 @@ def map_colors(x, palette, n):
         return palette[x][n]
     else: 
         return '#000000'
-    
+
+
+tab_style = {
+    'backgroundColor': '#11426F',
+    'color': 'white',
+}
+
+tab_selected_style = {
+    'backgroundColor': '#0A6CAD',
+    'color': 'white',
+    'fontWeight': 'bold',
+}

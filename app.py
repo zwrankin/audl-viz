@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.graph_objs as go
 from src.data.utils import division_dict
 from src.data.utils import subset_years, apply_game_threshold, aggregate_rates, make_sankey_df
-from src.visualization.utils import palette_df, palette, map_colors
+from src.visualization.utils import palette_df, palette, map_colors, tab_style, tab_selected_style
 
 app = dash.Dash(__name__)
 
@@ -58,7 +58,7 @@ app.layout = html.Div([
     dcc.Tabs(id="tabs", style={
         'textAlign': 'center', 'margin': '48px 0', 'fontFamily': 'system-ui'}, children=[
 
-        dcc.Tab(label='Team Explorer', children=[
+        dcc.Tab(label='TEAM EXPLORER', style=tab_style, selected_style=tab_selected_style, children=[
             html.Div([
                 dcc.Dropdown(
                     id='team',
@@ -121,7 +121,7 @@ app.layout = html.Div([
             ]),
         ]),
 
-        dcc.Tab(label='League Explorer', children=[
+        dcc.Tab(label='LEAGUE EXPLORER', style=tab_style, selected_style=tab_selected_style, children=[
             html.Div([
                 html.H5('Team Stats'),
                 dcc.Dropdown(
@@ -159,7 +159,7 @@ app.layout = html.Div([
             ]),
         ]),
 
-        dcc.Tab(label='Individual Leaderboard', children=[
+        dcc.Tab(label='INDIVIDUAL LEADERBOARD', style=tab_style, selected_style=tab_selected_style, children=[
             html.Div([
                 dcc.Dropdown(
                     id='player-indicator',
