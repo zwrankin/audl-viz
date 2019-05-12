@@ -427,12 +427,16 @@ def update_team_comparison(year, indicators, metric, hover_data, click_data):
     marker_sizes[i] = 20
     line_widths[i] = 2
 
+    metric2 = "value"
+    if metric == "value":
+        metric2 = "rank"
+
     return {
         'data': [go.Scatter(
             x=dff[dff.team == t][metric],
             y=dff[dff.team == t]['indicator'],
             name=t,
-            text=t,
+            text=round(dff[dff.team == t][metric2], 2), 
             mode='markers+lines',
             marker={
                 'size': marker_sizes[i],  # 10
