@@ -9,9 +9,7 @@ from src.data.utils import division_dict
 from src.data.utils import subset_years, apply_game_threshold, aggregate_rates, make_sankey_df
 from src.visualization.utils import palette_df, palette, map_colors
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+app = dash.Dash(__name__)
 
 server = app.server
 
