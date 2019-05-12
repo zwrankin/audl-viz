@@ -36,7 +36,7 @@ def clean_dates(df, colname):
 
 
 def subset_years(df, year):
-    if year != 'All years':
+    if year != 'All seasons':
         return df[df.year == year]
     else:
         return df

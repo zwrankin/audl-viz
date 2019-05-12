@@ -123,7 +123,7 @@ app.layout = html.Div([
 
         dcc.Tab(label='LEAGUE EXPLORER', style=tab_style, selected_style=tab_selected_style, children=[
             html.Div([
-                html.H5('Team Stats'),
+                # html.H5('Team Stats'),
                 dcc.Dropdown(
                     id='team-eoy-indicators',
                     options=[{'label': i, 'value': i} for i in team_eoy_indicators],
@@ -131,7 +131,7 @@ app.layout = html.Div([
                     value=['O-line Scoring Efficiency', 'Hold Rate', 'Break Rate', 'D-line Scoring Efficiency'],
                     style={'width': '70%'}
                 ),
-                html.H6('Metric'),
+                # html.H6('Metric'),
                 dcc.RadioItems(
                     id='metric',
                     options=[{'label': i, 'value': i} for i in ['rank', 'value']],
@@ -141,7 +141,7 @@ app.layout = html.Div([
                 dcc.Markdown('*Highest value is ranked #1*'),
                 dcc.Graph(id='team-comparison'),
 
-                html.H6('Division'),
+                # html.H6('Division'),
                 dcc.RadioItems(
                     id='division',
                     options=[{'label': i, 'value': i} for i in division_dict.keys()],
@@ -269,10 +269,10 @@ def update_leaderboard(indicator, year, rate_type, min_games):
     dff = aggregate_rates(dff, player_indicators, rate_type)
 
     dff = dff.melt(id_vars='player', value_vars=player_indicators, var_name='indicator')
-    n_players = 15
+    n_players = 20
     dff = dff[dff.indicator == indicator]
     # Get correct team & color for specific year
-    if year == 'All years':
+    if year == 'All seasons':
         player_map = player_team[player_team['year'] == 2018]
     else:
         player_map = player_team[player_team['year'] == year]
