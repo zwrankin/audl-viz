@@ -18,9 +18,10 @@ team_index_vars = ['year', 'team', 'opponent', 'date', 'game']
 player_index_vars = ['year', 'team', 'player']
 
 df_t = pd.read_csv('./data/processed/team_stats.csv')
-df_t_wide = df_t.copy()  # TODO - need to address why df_t and df_p are not both wide or long
+df_t_wide = df_t.copy()
 team_indicators = [i for i in df_t.columns if i not in team_index_vars]
 team_eoy_indicators = team_indicators
+# For now, it seems best to melt df_t here, but df_p within the callbacks to allow custom processing (e.g. apply_game_threshold)
 df_t = df_t.melt(id_vars=team_index_vars, value_vars=team_indicators, var_name='indicator')
 df_t = pd.merge(df_t, palette_df, how='outer').sort_values('team')
 df_t['opponent_color1'] = df_t.opponent.transform(lambda x: map_colors(x, palette, 0))
@@ -34,13 +35,9 @@ df_eoy = pd.read_csv('./data/processed/team_stats_by_year.csv')
 
 df_goals = pd.read_csv('./data/processed/all_goals.csv')
 
-top_markdown_text = '''
-###  AUDL Data Visualization Prototype
-'''
-
 bottom_markdown_text = '''
 Data downloaded from [AUDL-pull](https://github.com/dfiorino/audl-pull) (credit Dan Fiorino)  
-Visualization by Zane Rankin using Plotly and Dash - [Github](https://github.com/zwrankin/audl-viz)
+Visualization by Zane Rankin (zwrankin@gmail.com) using Plotly and Dash - [Github](https://github.com/zwrankin/audl-viz)
 '''
 
 app.layout = html.Div([
@@ -50,10 +47,10 @@ app.layout = html.Div([
             style=dict(height='35%', width='35%'))],
         href='https://www.theaudl.com'),
 
-    html.H6('Season'),
+    # html.H6('Season'),
     dcc.RadioItems(
         id='year',
-        options=[{'label': i, 'value': i} for i in [2014, 2015, 2016, 2017, 2018, 'All years']],
+        options=[{'label': i, 'value': i} for i in [2014, 2015, 2016, 2017, 2018, 'All seasons']],
         value=2018,
         labelStyle={'display': 'inline-block'},
     ),
@@ -93,7 +90,7 @@ app.layout = html.Div([
 
                 html.Div(className='row', children=[
                     html.Div([
-                        # TODO - can control number of players to display, if you pass this to the o-sankey callback
+                        # NOTE - can control number of players to display, if you pass this to the o-sankey callback
                         # daq.NumericInput(
                         #     id='o-sankey-n-players',
                         #     label='Number players to display',
@@ -141,7 +138,7 @@ app.layout = html.Div([
                     value='rank',
                     labelStyle={'display': 'inline-block'},
                 ),
-                dcc.Markdown('*Note: For all ranks, highest value is ranked #1*'),
+                dcc.Markdown('*Highest value is ranked #1*'),
                 dcc.Graph(id='team-comparison'),
 
                 html.H6('Division'),
