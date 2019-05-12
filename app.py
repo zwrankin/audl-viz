@@ -87,16 +87,15 @@ app.layout = html.Div([
                 ),
                 dcc.Graph(id='team-players'),
 
+                daq.NumericInput(
+                    id='sankey-n-players',
+                    label='Players to display',
+                    value=14,
+                    max=30,
+                ),
 
                 html.Div(className='row', children=[
                     html.Div([
-                        # NOTE - can control number of players to display, if you pass this to the o-sankey callback
-                        # daq.NumericInput(
-                        #     id='o-sankey-n-players',
-                        #     label='Number players to display',
-                        #     value=14,
-                        #     max=30,
-                        # ),
                         dcc.Graph(id='o-sankey'),
                         dcc.Graph(id='o-conversion'),
                     ], className='six columns'),
@@ -242,17 +241,19 @@ def update_d_conversion(team, year):
 @app.callback(
     Output('o-sankey', 'figure'),
     [Input('team', 'value'),
-     Input('year', 'value')])
-def update_o_sankey(team, year):
-    return make_sankey(team, year, line='O')
+     Input('year', 'value'),
+     Input('sankey-n-players', 'value')])
+def update_o_sankey(team, year, n_players):
+    return make_sankey(team, year, n_players, line='O')
 
 
 @app.callback(
     Output('d-sankey', 'figure'),
     [Input('team', 'value'),
-     Input('year', 'value')])
-def update_d_sankey(team, year):
-    return make_sankey(team, year, line='D')
+     Input('year', 'value'),
+     Input('sankey-n-players', 'value')])
+def update_d_sankey(team, year, n_players):
+    return make_sankey(team, year, n_players, line='D')
 
 
 @app.callback(
@@ -451,9 +452,9 @@ def update_team_comparison(year, indicators, metric, hover_data, click_data):
     }
 
 
-def make_sankey(team, year, line):
+def make_sankey(team, year, n_players, line):
     """TODO - refactor so easier to move to viz utils, for now it has too many dependencies"""
-    data = make_sankey_df(df_goals, team, year, line)
+    data = make_sankey_df(df_goals, team, year, line, n_players=n_players)
     # Plotly sankey needs numeric ids, not names
     players = set(data.Passer.tolist() + data.Receiver.tolist())
     player_dict = {j: i for i, j in enumerate(players)}
