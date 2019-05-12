@@ -7,11 +7,9 @@ import pandas as pd
 import plotly.graph_objs as go
 from src.data.utils import division_dict
 from src.data.utils import subset_years, apply_game_threshold, aggregate_rates, make_sankey_df
-from src.visualization.utils import palette_df, palette, map_colors
+from src.visualization.utils import palette_df, palette, map_colors, tab_style, tab_selected_style
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+app = dash.Dash(__name__)
 
 server = app.server
 
@@ -20,9 +18,10 @@ team_index_vars = ['year', 'team', 'opponent', 'date', 'game']
 player_index_vars = ['year', 'team', 'player']
 
 df_t = pd.read_csv('./data/processed/team_stats.csv')
-df_t_wide = df_t.copy()  # TODO - need to address why df_t and df_p are not both wide or long
+df_t_wide = df_t.copy()
 team_indicators = [i for i in df_t.columns if i not in team_index_vars]
 team_eoy_indicators = team_indicators
+# For now, it seems best to melt df_t here, but df_p within the callbacks to allow custom processing (e.g. apply_game_threshold)
 df_t = df_t.melt(id_vars=team_index_vars, value_vars=team_indicators, var_name='indicator')
 df_t = pd.merge(df_t, palette_df, how='outer').sort_values('team')
 df_t['opponent_color1'] = df_t.opponent.transform(lambda x: map_colors(x, palette, 0))
@@ -36,13 +35,9 @@ df_eoy = pd.read_csv('./data/processed/team_stats_by_year.csv')
 
 df_goals = pd.read_csv('./data/processed/all_goals.csv')
 
-top_markdown_text = '''
-###  AUDL Data Visualization Prototype
-'''
-
 bottom_markdown_text = '''
 Data downloaded from [AUDL-pull](https://github.com/dfiorino/audl-pull) (credit Dan Fiorino)  
-Visualization by Zane Rankin using Plotly and Dash - [Github](https://github.com/zwrankin/audl-viz)
+Visualization by Zane Rankin (zwrankin@gmail.com) using Plotly and Dash - [Github](https://github.com/zwrankin/audl-viz)
 '''
 
 app.layout = html.Div([
@@ -52,10 +47,10 @@ app.layout = html.Div([
             style=dict(height='35%', width='35%'))],
         href='https://www.theaudl.com'),
 
-    html.H6('Season'),
+    # html.H6('Season'),
     dcc.RadioItems(
         id='year',
-        options=[{'label': i, 'value': i} for i in [2014, 2015, 2016, 2017, 2018, 'All years']],
+        options=[{'label': i, 'value': i} for i in [2014, 2015, 2016, 2017, 2018, 'All seasons']],
         value=2018,
         labelStyle={'display': 'inline-block'},
     ),
@@ -63,13 +58,13 @@ app.layout = html.Div([
     dcc.Tabs(id="tabs", style={
         'textAlign': 'center', 'margin': '48px 0', 'fontFamily': 'system-ui'}, children=[
 
-        dcc.Tab(label='Team Explorer', children=[
+        dcc.Tab(label='TEAM EXPLORER', style=tab_style, selected_style=tab_selected_style, children=[
             html.Div([
                 dcc.Dropdown(
                     id='team',
                     options=[{'label': i, 'value': i} for i in df_t.team.sort_values().unique()],
                     value='Atlanta Hustle',
-                    style={'fontSize': 20, 'width': 600, 'verticalAlign': 'middle'},
+                    style={'fontSize': 20, 'width': '70%', 'verticalAlign': 'middle'},
                 ),
 
                 dcc.Dropdown(
@@ -77,7 +72,7 @@ app.layout = html.Div([
                     options=[{'label': i, 'value': i} for i in player_indicators],
                     multi=True,
                     value=['Plus/Minus', 'Goals', 'Assists', 'Hockey Assists', 'Blocks', 'Turnovers'],
-                    style={'width': 600}
+                    style={'width': '70%'}
                 ),
                 dcc.RadioItems(
                     id='rate-type',
@@ -92,22 +87,23 @@ app.layout = html.Div([
                 ),
                 dcc.Graph(id='team-players'),
 
-                html.Div([
-                    dcc.Graph(id='o-sankey'),
-                    dcc.Graph(id='o-conversion'),
-                    # TODO - can control number of players to display, if you pass this to the o-sankey callback
-                    # daq.NumericInput(
-                    #     id='o-sankey-n-players',
-                    #     label='Number players to display',
-                    #     value=14,
-                    #     max=30,
-                    # ),
-                ], style={'width': '48%', 'float': 'left'}),
+                daq.NumericInput(
+                    id='sankey-n-players',
+                    label='Players to display',
+                    value=14,
+                    max=30,
+                ),
 
-                html.Div([
-                    dcc.Graph(id='d-sankey'),
-                    dcc.Graph(id='d-conversion'),
-                ], style={'width': '48%', 'float': 'right'}),
+                html.Div(className='row', children=[
+                    html.Div([
+                        dcc.Graph(id='o-sankey'),
+                        dcc.Graph(id='o-conversion'),
+                    ], className='six columns'),
+                    html.Div([
+                        dcc.Graph(id='d-sankey'),
+                        dcc.Graph(id='d-conversion'),
+                    ], className='six columns'),
+                ]),
 
                 html.H6('Season Timeline'),
                 dcc.Dropdown(
@@ -115,7 +111,7 @@ app.layout = html.Div([
                     options=[{'label': i, 'value': i} for i in team_indicators],
                     multi=True,
                     value=['Hold Rate', 'Break Rate'],
-                    style={'width': 600}
+                    style={'width': '70%'}
                 ),
 
                 dcc.Graph(id='team-timeseries'),
@@ -124,27 +120,27 @@ app.layout = html.Div([
             ]),
         ]),
 
-        dcc.Tab(label='League Explorer', children=[
+        dcc.Tab(label='LEAGUE EXPLORER', style=tab_style, selected_style=tab_selected_style, children=[
             html.Div([
-                html.H5('Team Stats'),
+                # html.H5('Team Stats'),
                 dcc.Dropdown(
                     id='team-eoy-indicators',
                     options=[{'label': i, 'value': i} for i in team_eoy_indicators],
                     multi=True,
                     value=['O-line Scoring Efficiency', 'Hold Rate', 'Break Rate', 'D-line Scoring Efficiency'],
-                    style={'width': 600}
+                    style={'width': '70%'}
                 ),
-                html.H6('Metric'),
+                # html.H6('Metric'),
                 dcc.RadioItems(
                     id='metric',
                     options=[{'label': i, 'value': i} for i in ['rank', 'value']],
                     value='rank',
                     labelStyle={'display': 'inline-block'},
                 ),
-                dcc.Markdown('*Note: For all ranks, highest value is ranked #1*'),
+                dcc.Markdown('*Highest value is ranked #1*'),
                 dcc.Graph(id='team-comparison'),
 
-                html.H6('Division'),
+                # html.H6('Division'),
                 dcc.RadioItems(
                     id='division',
                     options=[{'label': i, 'value': i} for i in division_dict.keys()],
@@ -155,20 +151,20 @@ app.layout = html.Div([
                     id='matchup-indicator',
                     options=[{'label': i, 'value': i} for i in team_indicators],
                     value='Hold Rate',
-                    style={'width': 600}
+                    style={'width': '50%'}
                 ),
                 dcc.Graph(id='matchup-heatmap'),
 
             ]),
         ]),
 
-        dcc.Tab(label='Individual Leaderboard', children=[
+        dcc.Tab(label='INDIVIDUAL LEADERBOARD', style=tab_style, selected_style=tab_selected_style, children=[
             html.Div([
                 dcc.Dropdown(
                     id='player-indicator',
                     options=[{'label': i, 'value': i} for i in player_indicators],
                     value='Plus/Minus',
-                    style={'width': 600}
+                    style={'width': '50%'}
                 ),
                 dcc.RadioItems(
                     id='rate-type1',
@@ -245,17 +241,19 @@ def update_d_conversion(team, year):
 @app.callback(
     Output('o-sankey', 'figure'),
     [Input('team', 'value'),
-     Input('year', 'value')])
-def update_o_sankey(team, year):
-    return make_sankey(team, year, line='O')
+     Input('year', 'value'),
+     Input('sankey-n-players', 'value')])
+def update_o_sankey(team, year, n_players):
+    return make_sankey(team, year, n_players, line='O')
 
 
 @app.callback(
     Output('d-sankey', 'figure'),
     [Input('team', 'value'),
-     Input('year', 'value')])
-def update_d_sankey(team, year):
-    return make_sankey(team, year, line='D')
+     Input('year', 'value'),
+     Input('sankey-n-players', 'value')])
+def update_d_sankey(team, year, n_players):
+    return make_sankey(team, year, n_players, line='D')
 
 
 @app.callback(
@@ -272,10 +270,10 @@ def update_leaderboard(indicator, year, rate_type, min_games):
     dff = aggregate_rates(dff, player_indicators, rate_type)
 
     dff = dff.melt(id_vars='player', value_vars=player_indicators, var_name='indicator')
-    n_players = 15
+    n_players = 20
     dff = dff[dff.indicator == indicator]
     # Get correct team & color for specific year
-    if year == 'All years':
+    if year == 'All seasons':
         player_map = player_team[player_team['year'] == 2018]
     else:
         player_map = player_team[player_team['year'] == year]
@@ -429,12 +427,16 @@ def update_team_comparison(year, indicators, metric, hover_data, click_data):
     marker_sizes[i] = 20
     line_widths[i] = 2
 
+    metric2 = "value"
+    if metric == "value":
+        metric2 = "rank"
+
     return {
         'data': [go.Scatter(
             x=dff[dff.team == t][metric],
             y=dff[dff.team == t]['indicator'],
             name=t,
-            text=t,
+            text=round(dff[dff.team == t][metric2], 2), 
             mode='markers+lines',
             marker={
                 'size': marker_sizes[i],  # 10
@@ -454,9 +456,9 @@ def update_team_comparison(year, indicators, metric, hover_data, click_data):
     }
 
 
-def make_sankey(team, year, line):
+def make_sankey(team, year, n_players, line):
     """TODO - refactor so easier to move to viz utils, for now it has too many dependencies"""
-    data = make_sankey_df(df_goals, team, year, line)
+    data = make_sankey_df(df_goals, team, year, line, n_players=n_players)
     # Plotly sankey needs numeric ids, not names
     players = set(data.Passer.tolist() + data.Receiver.tolist())
     player_dict = {j: i for i, j in enumerate(players)}
